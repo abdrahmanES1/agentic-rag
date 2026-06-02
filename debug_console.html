@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moroccan RAG v11 — Debug Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Spectral:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#0D6E6E;--teal-lt:#E1F5EE;--teal-bdr:#5DCAA5;
+  --amber:#BA7517;--amber-lt:#FAEEDA;--amber-bdr:#EF9F27;
+  --red:#A32D2D;--red-lt:#FCEBEB;--red-bdr:#F09595;
+  --green:#3B6D11;--green-lt:#EAF3DE;--green-bdr:#97C459;
+  --blue-lt:#E6F1FB;--blue:#185FA5;--blue-bdr:#85B7EB;
+  --bg:#ffffff;--bg2:#f7f7f5;--bg3:#f0efec;
+  --border:rgba(0,0,0,.10);--border2:rgba(0,0,0,.18);
+  --txt:#1a1a18;--txt2:#5c5c58;--txt3:#8f8f8a;
+  --sans:'DM Sans',system-ui;--serif:'Spectral',Georgia;--mono:'IBM Plex Mono',monospace;
+  --r:12px;--rm:8px;--rs:5px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#161614;--bg2:#1f1f1c;--bg3:#282825;--border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);--txt:#e8e8e2;--txt2:#9a9a94;--txt3:#5e5e58;--teal:#1D9E75;--teal-lt:#063d2c;--teal-bdr:#0D6E6E;--amber-lt:#3d2800;--red-lt:#3d0f0f;--green-lt:#1a2e08;--blue-lt:#0a1f38}
+}
+html,body{height:100%;font-family:var(--sans);font-size:14px;color:var(--txt);background:var(--bg3)}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* header */
+.hdr{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:.5px solid var(--border);background:var(--bg);flex-shrink:0;justify-content:space-between}
+.hdr-brand{display:flex;align-items:center;gap:10px}
+.hdr-logo{width:32px;height:32px;border-radius:7px;background:var(--amber);display:flex;align-items:center;justify-content:center}
+.hdr-title{font-family:var(--serif);font-size:16px;font-weight:600}
+.hdr-sub{font-size:11px;color:var(--txt3)}
+.hdr-badge{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:99px;border:.5px solid;background:var(--amber-lt);color:var(--amber);border-color:var(--amber-bdr)}
+.hdr-btns{display:flex;gap:8px}
+.hbtn{font-size:12px;padding:5px 12px;border:.5px solid var(--border2);border-radius:var(--rm);background:var(--bg2);color:var(--txt);cursor:pointer;transition:all .12s;font-family:var(--sans)}
+.hbtn:hover{background:var(--bg3)}
+.hbtn.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+/* body */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* sidebar */
+.sidebar{width:190px;flex-shrink:0;border-right:.5px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;padding:14px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;font-size:13px;color:var(--txt2);border-left:2px solid transparent;transition:all .12s}
+.nav-item:hover{background:var(--bg);color:var(--txt)}
+.nav-item.active{background:var(--bg);color:var(--amber);border-left-color:var(--amber);font-weight:500}
+.nav-icon{width:14px;height:14px;flex-shrink:0;opacity:.6}
+.nav-item.active .nav-icon{opacity:1}
+.nav-sep{height:.5px;background:var(--border);margin:8px 14px}
+
+/* panels */
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.panel{display:none;flex:1;overflow-y:auto;padding:20px;flex-direction:column;gap:16px}
+.panel.active{display:flex}
+
+/* cards */
+.card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rm);padding:14px}
+.card-title{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--txt3);margin-bottom:10px;padding-bottom:6px;border-bottom:.5px solid var(--border)}
+
+/* status grid */
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px}
+.stat-card{padding:12px;background:var(--bg2);border-radius:var(--rs);text-align:center}
+.stat-val{font-family:var(--mono);font-size:20px;font-weight:500}
+.stat-lbl{font-size:10px;color:var(--txt3);margin-top:3px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.dot-green{background:#639922}.dot-red{background:#A32D2D}.dot-amber{background:var(--amber)}.dot-grey{background:var(--txt3)}
+
+/* question bar */
+.q-bar{display:flex;gap:8px;align-items:flex-end;margin-bottom:4px}
+.q-input{flex:1;padding:9px 12px;border:.5px solid var(--border2);border-radius:var(--rm);background:var(--bg2);color:var(--txt);font-family:var(--sans);font-size:14px;resize:none;min-height:40px;outline:none;transition:border .15s}
+.q-input:focus{border-color:var(--amber)}
+.run-btn{padding:9px 16px;background:var(--amber);color:#fff;border:none;border-radius:var(--rm);cursor:pointer;font-size:14px;font-weight:500;font-family:var(--sans);transition:opacity .15s;height:40px;white-space:nowrap}
+.run-btn:hover{opacity:.87}
+.run-btn:disabled{opacity:.38;cursor:not-allowed}
+.quick-btns{display:flex;gap:5px;flex-wrap:wrap}
+.qbtn{font-size:11px;font-family:var(--mono);padding:3px 9px;border:.5px solid var(--border);border-radius:99px;background:var(--bg2);color:var(--txt2);cursor:pointer;transition:all .12s}
+.qbtn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-lt)}
+
+/* step list */
+.step-rows{display:flex;flex-direction:column;gap:4px}
+.step-row{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:.5px solid var(--border);border-radius:var(--rs);background:var(--bg);transition:border .12s;cursor:pointer}
+.step-row:hover{border-color:var(--amber)}
+.step-row.expanded{border-color:var(--amber)}
+.step-icon{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;font-family:var(--mono)}
+.si-ok{background:var(--green-lt);color:var(--green)}
+.si-warn{background:var(--amber-lt);color:var(--amber)}
+.si-err{background:var(--red-lt);color:var(--red)}
+.si-skip{background:var(--bg2);color:var(--txt3)}
+.step-body{flex:1}
+.step-name{font-size:13px;font-weight:500;margin-bottom:1px}
+.step-dur{font-family:var(--mono);font-size:10px;color:var(--txt3);flex-shrink:0;margin-top:3px}
+.step-warn{font-size:11px;color:var(--amber);margin-top:3px}
+.step-err{font-size:11px;color:var(--red);margin-top:3px}
+.step-detail{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--rs);padding:10px;margin-top:6px;display:none}
+.step-detail.open{display:block}
+.detail-section{margin-bottom:8px}
+.detail-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--txt3);margin-bottom:4px}
+.detail-val{font-family:var(--mono);font-size:11px;color:var(--txt2);white-space:pre-wrap;word-break:break-all}
+
+/* chunks table */
+.chunks-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.chunks-tbl th{text-align:left;padding:5px 8px;background:var(--bg3);font-weight:500;font-size:11px;color:var(--txt2);border-bottom:.5px solid var(--border)}
+.chunks-tbl td{padding:5px 8px;border-bottom:.5px solid var(--border);vertical-align:top}
+.chunks-tbl tr:last-child td{border-bottom:none}
+.chunks-tbl tr:hover td{background:var(--bg2)}
+.chunk-preview{font-family:var(--mono);font-size:10px;color:var(--txt2);max-width:350px;white-space:pre-wrap;word-break:break-all}
+.lang-tag{font-family:var(--mono);font-size:10px;padding:1px 5px;border-radius:3px;border:.5px solid}
+.lt-ar{background:var(--teal-lt);color:var(--teal);border-color:var(--teal-bdr)}
+.lt-fr{background:var(--blue-lt);color:var(--blue);border-color:var(--blue-bdr)}
+.lt-mx{background:var(--amber-lt);color:var(--amber);border-color:var(--amber-bdr)}
+
+/* retrieval table */
+.ret-card{padding:10px 12px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--rs);margin-bottom:6px}
+.ret-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.ret-id{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--txt)}
+.ret-scores{display:flex;gap:10px}
+.ret-score{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:3px}
+.rs-bm25{background:var(--blue-lt);color:var(--blue)}
+.rs-dense{background:var(--teal-lt);color:var(--teal)}
+.rs-rrf{background:var(--amber-lt);color:var(--amber)}
+.rs-reranker{background:var(--green-lt);color:var(--green);border:.5px solid var(--green-bdr)}
+.ret-preview{font-family:var(--mono);font-size:11px;color:var(--txt2);white-space:pre-wrap;word-break:break-all;margin-top:4px}
+.ret-src{font-size:11px;color:var(--txt3);margin-bottom:2px}
+
+/* context box */
+.context-box{font-family:var(--mono);font-size:11px;color:var(--txt2);white-space:pre-wrap;word-break:break-all;max-height:400px;overflow-y:auto;line-height:1.6}
+.context-box .src-marker{color:var(--teal);font-weight:500}
+
+/* answer box */
+.answer-box{font-size:14px;line-height:1.7;color:var(--txt);white-space:pre-wrap;word-break:break-word}
+.answer-fallback{color:var(--red)}
+
+/* root causes */
+.rc-item{display:flex;gap:8px;padding:8px;background:var(--red-lt);border:.5px solid var(--red-bdr);border-radius:var(--rs);margin-bottom:6px;font-size:12px;color:var(--red)}
+.rec-item{display:flex;gap:8px;padding:8px;background:var(--green-lt);border:.5px solid var(--green-bdr);border-radius:var(--rs);margin-bottom:6px;font-size:12px;color:var(--green)}
+
+/* KB viewer */
+.kb-filter{display:flex;gap:8px;margin-bottom:10px}
+.filter-input{flex:1;padding:6px 10px;border:.5px solid var(--border2);border-radius:var(--rm);background:var(--bg2);color:var(--txt);font-family:var(--sans);font-size:13px;outline:none}
+.filter-input:focus{border-color:var(--amber)}
+
+/* OCR tester */
+.tier-card{padding:12px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--rm);margin-bottom:8px}
+.tier-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.tier-name{font-family:var(--mono);font-size:12px;font-weight:500}
+.tier-ok{color:var(--green)}.tier-err{color:var(--red)}
+.tier-preview{font-family:var(--mono);font-size:11px;color:var(--txt2);white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;background:var(--bg2);padding:8px;border-radius:var(--rs);margin-top:6px}
+
+/* scrollbars */
+.panel::-webkit-scrollbar,.context-box::-webkit-scrollbar,.tier-preview::-webkit-scrollbar{width:4px}
+.panel::-webkit-scrollbar-thumb,.context-box::-webkit-scrollbar-thumb,.tier-preview::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* spin */
+.spin{width:13px;height:13px;border:2px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-brand">
+      <div class="hdr-logo">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="2" rx="1" fill="white"/><rect x="2" y="7" width="10" height="2" rx="1" fill="rgba(255,255,255,.6)"/><rect x="2" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,.4)"/><rect x="2" y="15" width="6" height="2" rx="1" fill="rgba(255,255,255,.25)"/></svg>
+      </div>
+      <div>
+        <div class="hdr-title">RAG Pipeline — Debug Console</div>
+        <div class="hdr-sub">Moroccan RAG v11.0</div>
+      </div>
+    </div>
+    <div id="hdr-status"></div>
+    <div class="hdr-btns">
+      <a href="moroccan_rag_v11_gui.html" class="hbtn">← Main GUI</a>
+      <button class="hbtn" onclick="refreshStatus()">⟳ Refresh</button>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- sidebar -->
+    <div class="sidebar">
+      <div class="nav-item active" onclick="switchPanel('debug',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.2"/><line x1="7.5" y1="4" x2="7.5" y2="7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="7.5" cy="10.5" r=".8" fill="currentColor"/></svg>
+        Debug Query
+      </div>
+      <div class="nav-item" onclick="switchPanel('kb',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><rect x="2" y="2" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="7.5" x2="10" y2="7.5" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="10" x2="8" y2="10" stroke="currentColor" stroke-width="1.1"/></svg>
+        KB Viewer
+      </div>
+      <div class="nav-item" onclick="switchPanel('ocr',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4 5h3M4 7.5h7M4 10h5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        OCR Tester
+      </div>
+      <div class="nav-item" onclick="switchPanel('ollama',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><rect x="2" y="4" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 4V3h5v1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="7.5" cy="8" r="1.5" stroke="currentColor" stroke-width="1.1"/></svg>
+        Ollama Test
+      </div>
+      <div class="nav-sep"></div>
+      <div class="nav-item" onclick="switchPanel('reports',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><rect x="2" y="1" width="11" height="13" rx="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="4.5" y1="5" x2="10.5" y2="5" stroke="currentColor" stroke-width="1.1"/><line x1="4.5" y1="7.5" x2="10.5" y2="7.5" stroke="currentColor" stroke-width="1.1"/><line x1="4.5" y1="10" x2="8" y2="10" stroke="currentColor" stroke-width="1.1"/></svg>
+        Saved Reports
+      </div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+
+      <!-- DEBUG QUERY PANEL -->
+      <div id="panel-debug" class="panel active">
+        <!-- input -->
+        <div class="card" style="padding:12px">
+          <div class="quick-btns" style="margin-bottom:8px">
+            <button class="qbtn" onclick="setQ('ما هي الوثائق المطلوبة للحصول على البطاقة الوطنية للتعريف؟')">AR · CNIE</button>
+            <button class="qbtn" onclick="setQ('Quels documents pour obtenir un passeport au Maroc?')">FR · passport</button>
+            <button class="qbtn" onclick="setQ('واش خاصني باش نخرج الكارط ديال التعريف؟')">Darija</button>
+            <button class="qbtn" onclick="setQ('kifach ndir passport?')">Arabizi</button>
+            <button class="qbtn" onclick="setQ('ما هي الوثائق المطلوبة للحصول على رخصة السياقة وكم تكلف؟')">AR · multi-hop</button>
+          </div>
+          <div class="q-bar">
+            <textarea class="q-input" id="q-input" rows="1" placeholder="Enter question to debug…"></textarea>
+            <button class="run-btn" id="run-btn" onclick="runDebug()">Run Debug</button>
+          </div>
+        </div>
+
+        <div id="debug-results" style="display:none;display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+
+      <!-- KB VIEWER PANEL -->
+      <div id="panel-kb" class="panel">
+        <div class="card">
+          <div class="card-title">Knowledge Base — All Chunks</div>
+          <div class="kb-filter">
+            <input class="filter-input" id="kb-filter" placeholder="Filter by source, language, or text…" oninput="filterChunks()"/>
+            <button class="hbtn" onclick="loadKB()">Reload</button>
+          </div>
+          <div id="kb-stats" style="font-size:12px;color:var(--txt2);margin-bottom:10px"></div>
+          <div id="kb-table"></div>
+        </div>
+      </div>
+
+      <!-- OCR TESTER PANEL -->
+      <div id="panel-ocr" class="panel">
+        <div class="card">
+          <div class="card-title">OCR Tier Comparison</div>
+          <div class="q-bar" style="margin-bottom:10px">
+            <select id="ocr-file" style="flex:1;padding:8px;border:.5px solid var(--border2);border-radius:var(--rm);background:var(--bg2);color:var(--txt);font-family:var(--sans);font-size:13px;outline:none">
+              <option value="">— Select PDF —</option>
+            </select>
+            <button class="run-btn" style="background:var(--teal)" onclick="runOcr()">Compare Tiers</button>
+          </div>
+          <div id="ocr-results"></div>
+        </div>
+      </div>
+
+      <!-- OLLAMA TEST PANEL -->
+      <div id="panel-ollama" class="panel">
+        <div class="card">
+          <div class="card-title">Ollama Connectivity Test</div>
+          <button class="run-btn" onclick="testOllama()" style="margin-bottom:14px">Test Connection</button>
+          <div id="ollama-results"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Custom Prompt Test</div>
+          <div class="q-bar" style="margin-bottom:0">
+            <textarea class="q-input" id="ollama-prompt" rows="3" placeholder="Enter a prompt to test directly…"></textarea>
+            <button class="run-btn" onclick="testPrompt()">Send</button>
+          </div>
+          <div id="prompt-result" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- REPORTS PANEL -->
+      <div id="panel-reports" class="panel">
+        <div class="card">
+          <div class="card-title">Saved Debug Reports</div>
+          <button class="hbtn" onclick="loadReports()" style="margin-bottom:10px">Refresh List</button>
+          <div id="reports-list"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<script>
+const API = 'http://localhost:5000';
+
+let _kbData = null;
+
+/* ── nav ──────────────────────────────────────────────────────────────── */
+function switchPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'kb') loadKB();
+  if (id === 'ocr') loadPdfList();
+  if (id === 'reports') loadReports();
+}
+
+function setQ(t) { document.getElementById('q-input').value = t; }
+
+/* ── status ───────────────────────────────────────────────────────────── */
+async function refreshStatus() {
+  try {
+    const d = await (await fetch(`${API}/api/status`)).json();
+    const pills = [
+      pill(d.pipeline_ready ? 'ok' : 'err', d.pipeline_ready ? 'Pipeline ready' : 'Pipeline error'),
+      pill(d.ollama_connected ? 'ok' : 'err', `Ollama · ${d.ollama_model}`),
+      pill(d.kb?.arabic ? 'ok' : 'warn', `AR ${d.kb?.arabic_chunks || 0} chunks`),
+      pill(d.kb?.french ? 'ok' : 'warn', `FR ${d.kb?.french_chunks || 0} chunks`),
+    ].join('');
+    document.getElementById('hdr-status').innerHTML = pills;
+  } catch(e) {
+    document.getElementById('hdr-status').innerHTML = pill('err', 'API offline');
+  }
+}
+function pill(type, text) {
+  const map = {ok:['dot-green','var(--green-lt)','var(--green)','var(--green-bdr)'],
+                err:['dot-red','var(--red-lt)','var(--red)','var(--red-bdr)'],
+                warn:['dot-amber','var(--amber-lt)','var(--amber)','var(--amber-bdr)']};
+  const [dc,bg,fg,bdr] = map[type] || map.warn;
+  return `<span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:99px;border:.5px solid;background:${bg};color:${fg};border-color:${bdr};margin-right:5px">
+    <span class="dot ${dc}"></span>${text}</span>`;
+}
+
+/* ── debug run ─────────────────────────────────────────────────────────── */
+async function runDebug() {
+  const q = document.getElementById('q-input').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Running…';
+
+  const res = document.getElementById('debug-results');
+  res.style.display = 'flex';
+  res.innerHTML = `<div style="font-size:13px;color:var(--txt2);padding:12px">
+    <span class="spin"></span> Running 11-step pipeline trace…</div>`;
+
+  try {
+    const data = await (await fetch(`${API}/api/debug`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question: q})
+    })).json();
+
+    if (data.error) {
+      res.innerHTML = `<div class="rc-item">✗ API Error: ${esc(data.error)}</div>`;
+    } else {
+      renderDebugReport(data, res);
+    }
+  } catch(e) {
+    res.innerHTML = `<div class="rc-item">✗ Cannot reach API at ${esc(API)}. Is api_v2.py running?</div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Run Debug';
+}
+
+function renderDebugReport(d, container) {
+  const html = [];
+
+  // ── Overview card ──────────────────────────────────────────────────────
+  const meta = d.initial_retrieval?.metadata || {};
+  const rerankerBadge = meta.reranker_applied
+    ? `<span class="ret-score rs-reranker" style="font-size:11px">reranker ✓ ${(d.reranked||[]).length} chunks</span>`
+    : `<span class="ret-score" style="font-size:11px;background:var(--amber-lt);color:var(--amber)">reranker ✗ off</span>`;
+  const retrievedBadge = `<span class="ret-score rs-rrf" style="font-size:11px">${(d.retrieved||[]).length} retrieved → ${(d.reranked||[]).length} sent to LLM</span>`;
+  html.push(`<div class="card">
+    <div class="card-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      Overview — ${Math.round(d.total_duration_ms)} ms
+      ${retrievedBadge}
+      ${rerankerBadge}
+    </div>
+    <div class="step-rows" id="step-rows">
+    ${(d.steps || []).map((s,i) => renderStep(s, i)).join('')}
+    </div>
+  </div>`);
+
+  // ── Root causes ────────────────────────────────────────────────────────
+  if (d.root_causes?.length) {
+    html.push(`<div class="card">
+      <div class="card-title">Root Causes</div>
+      ${d.root_causes.map(rc => `<div class="rc-item"><span style="flex-shrink:0;font-size:14px">✗</span><span>${esc(rc)}</span></div>`).join('')}
+    </div>`);
+  }
+  if (d.recommendations?.length) {
+    html.push(`<div class="card">
+      <div class="card-title">Recommendations</div>
+      ${d.recommendations.map(r => `<div class="rec-item"><span style="flex-shrink:0;font-size:14px">→</span><span>${esc(r)}</span></div>`).join('')}
+    </div>`);
+  }
+
+  // ── KB chunks ──────────────────────────────────────────────────────────
+  const kb = d.kb_summary || {};
+  html.push(`<div class="card">
+    <div class="card-title">Knowledge Base — ${(kb.arabic_chunks||0)} AR + ${(kb.french_chunks||0)} FR chunks</div>
+    ${renderChunkTable(kb.arabic_sample || [], 'Arabic')}
+    ${renderChunkTable(kb.french_sample || [], 'French')}
+  </div>`);
+
+  // ── Retrieved chunks ───────────────────────────────────────────────────
+  html.push(`<div class="card">
+    <div class="card-title">Retrieved Chunks (${(d.retrieved||[]).length})</div>
+    ${(d.retrieved||[]).map(r => renderRetCard(r)).join('') || '<div style="font-size:13px;color:var(--txt3)">No chunks retrieved</div>'}
+  </div>`);
+
+  // ── Reranked ───────────────────────────────────────────────────────────
+  if (d.reranked?.length) {
+    html.push(`<div class="card">
+      <div class="card-title">Reranked Top ${d.reranked.length} (sent to LLM)</div>
+      ${d.reranked.map(r => renderRetCard(r, true)).join('')}
+    </div>`);
+  }
+
+  // ── Context sent to LLM ────────────────────────────────────────────────
+  const ctx = d.context_sent || '';
+  html.push(`<div class="card">
+    <div class="card-title">Context Sent to LLM — ${ctx.split(/\s+/).length} words</div>
+    <div class="context-box">${ctx ? highlightSources(esc(ctx)) : '<span style="color:var(--red)">EMPTY — this is why generation fails!</span>'}</div>
+  </div>`);
+
+  // ── Raw + Final answers ────────────────────────────────────────────────
+  const isFallback = ['حدث خطأ تقني','Une erreur technique','لم أجد','ماجدتش','Informations insuffisantes']
+    .some(f => (d.raw_answer||'').includes(f));
+  html.push(`<div class="card">
+    <div class="card-title">Raw Answer from LLM</div>
+    <div class="answer-box ${isFallback?'answer-fallback':''}">${esc(d.raw_answer||'(empty)')}</div>
+  </div>`);
+
+  html.push(`<div class="card">
+    <div class="card-title">Final Verified Answer</div>
+    <div class="answer-box">${esc(d.final_answer||'(empty)')}</div>
+  </div>`);
+
+  container.innerHTML = html.join('');
+
+  // Wire step toggles
+  container.querySelectorAll('.step-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const det = row.querySelector('.step-detail');
+      if (det) {
+        det.classList.toggle('open');
+        row.classList.toggle('expanded');
+      }
+    });
+  });
+}
+
+function renderStep(s, idx) {
+  const icons = {ok:'✓',warn:'⚠',error:'✗',skip:'·'};
+  const cls   = {ok:'si-ok',warn:'si-warn',error:'si-err',skip:'si-skip'};
+  const name = `Step ${s.step} — ${s.name}`;
+  const warns = (s.warnings||[]).map(w=>`<div class="step-warn">⚠ ${esc(w)}</div>`).join('');
+  const errs  = (s.errors||[]).map(e=>`<div class="step-err">✗ ${esc(e)}</div>`).join('');
+  const inputStr  = JSON.stringify(s.inputs||{},  null, 2);
+  const outputStr = JSON.stringify(s.outputs||{}, null, 2);
+  const hasDetail = Object.keys(s.inputs||{}).length + Object.keys(s.outputs||{}).length > 0;
+  const detail = hasDetail ? `
+    <div class="step-detail">
+      <div class="detail-section">
+        <div class="detail-label">Inputs</div>
+        <div class="detail-val">${esc(inputStr)}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Outputs</div>
+        <div class="detail-val">${esc(outputStr)}</div>
+      </div>
+    </div>` : '';
+  return `<div class="step-row">
+    <div class="step-icon ${cls[s.status]||'si-skip'}">${icons[s.status]||'·'}</div>
+    <div class="step-body">
+      <div class="step-name">${esc(name)}</div>
+      ${warns}${errs}
+      ${detail}
+    </div>
+    <div class="step-dur">${Math.round(s.duration_ms||0)}ms</div>
+  </div>`;
+}
+
+function renderChunkTable(chunks, label) {
+  if (!chunks?.length) return `<div style="font-size:12px;color:var(--txt3);margin-bottom:8px">No ${label} chunks</div>`;
+  const rows = chunks.map(c => `<tr>
+    <td style="font-family:var(--mono);font-size:11px">${esc(c.chunk_id)}</td>
+    <td style="font-size:12px;color:var(--txt2)">${esc(c.source)} p.${c.page}</td>
+    <td><span class="lang-tag ${c.language==='arabic_msa'||c.language==='arabic'?'lt-ar':c.language==='french'?'lt-fr':'lt-mx'}">${esc(c.language)}</span></td>
+    <td style="font-family:var(--mono);font-size:11px">${c.word_count}w</td>
+    <td class="chunk-preview">${esc(c.text_preview||'')}</td>
+  </tr>`).join('');
+  return `<div style="font-size:11px;font-weight:500;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 5px">${label} sample</div>
+  <div style="overflow-x:auto">
+  <table class="chunks-tbl"><thead><tr><th>ID</th><th>Source</th><th>Lang</th><th>Words</th><th>Preview</th></tr></thead>
+  <tbody>${rows}</tbody></table></div>`;
+}
+
+function renderRetCard(r, compact=false) {
+  return `<div class="ret-card">
+    <div class="ret-header">
+      <div>
+        <span class="ret-id">${esc(r.chunk_id)}</span>
+        <span class="ret-src" style="margin-left:8px">${esc(r.source)} p.${r.page} · <span class="lang-tag ${r.language==='arabic_msa'?'lt-ar':r.language==='french'?'lt-fr':'lt-mx'}">${esc(r.language)}</span></span>
+      </div>
+      <div class="ret-scores">
+        ${r.bm25_score?`<span class="ret-score rs-bm25">bm25: ${r.bm25_score}</span>`:''}
+        ${r.dense_score?`<span class="ret-score rs-dense">dense: ${r.dense_score}</span>`:''}
+        ${r.rrf_score?`<span class="ret-score rs-rrf">rrf: ${r.rrf_score}</span>`:''}
+        ${r.reranker_score!=null?`<span class="ret-score rs-reranker">reranker: ${r.reranker_score}</span>`:''}
+      </div>
+    </div>
+    <div class="ret-preview">${esc((r.text_preview||'').slice(0, compact?200:400))}</div>
+  </div>`;
+}
+
+function highlightSources(text) {
+  return text.replace(/\[Source:([^\]]+)\]/g,
+    '<span class="src-marker">[Source:$1]</span>');
+}
+
+/* ── KB viewer ────────────────────────────────────────────────────────── */
+async function loadKB() {
+  document.getElementById('kb-table').innerHTML = '<div class="spin"></div> Loading…';
+  try {
+    _kbData = await (await fetch(`${API}/api/debug/kb`)).json();
+    renderKB(_kbData);
+  } catch(e) {
+    document.getElementById('kb-table').innerHTML = `<div class="rc-item">Cannot load KB: ${esc(String(e))}</div>`;
+  }
+}
+
+function filterChunks() {
+  if (!_kbData) return;
+  const q = document.getElementById('kb-filter').value.toLowerCase();
+  const filtered = {
+    arabic_chunks: _kbData.arabic_chunks.filter(c =>
+      c.source.toLowerCase().includes(q) || c.text_preview?.toLowerCase().includes(q) || c.language?.includes(q)),
+    french_chunks: _kbData.french_chunks.filter(c =>
+      c.source.toLowerCase().includes(q) || c.text_preview?.toLowerCase().includes(q) || c.language?.includes(q)),
+  };
+  renderKB(filtered);
+}
+
+function renderKB(data) {
+  const ar = data.arabic_chunks || [];
+  const fr = data.french_chunks || [];
+  document.getElementById('kb-stats').textContent =
+    `${ar.length} Arabic chunks + ${fr.length} French chunks = ${ar.length+fr.length} total`;
+
+  const rows = [...ar.map(c=>({...c,_idx:'AR'})), ...fr.map(c=>({...c,_idx:'FR'}))]
+    .map(c => `<tr>
+      <td style="font-family:var(--mono);font-size:10px">${esc(c.chunk_id)}</td>
+      <td style="font-size:12px">${esc(c.source)}</td>
+      <td style="font-family:var(--mono);font-size:11px">${c.page}</td>
+      <td><span class="lang-tag ${c.language==='arabic_msa'?'lt-ar':c.language==='french'?'lt-fr':'lt-mx'}">${esc(c.language||'?')}</span></td>
+      <td style="font-family:var(--mono);font-size:11px">${c.word_count}w</td>
+      <td class="chunk-preview" style="max-width:400px">${esc(c.text_preview||'')}</td>
+    </tr>`).join('');
+
+  document.getElementById('kb-table').innerHTML = `
+    <div style="overflow-x:auto">
+    <table class="chunks-tbl">
+      <thead><tr><th>ID</th><th>Source</th><th>Page</th><th>Lang</th><th>Words</th><th>Preview</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="6" style="color:var(--txt3);padding:12px">No chunks</td></tr>'}</tbody>
+    </table></div>`;
+}
+
+/* ── OCR tester ───────────────────────────────────────────────────────── */
+async function loadPdfList() {
+  try {
+    const d = await (await fetch(`${API}/api/debug/list-pdfs`)).json();
+    const sel = document.getElementById('ocr-file');
+    sel.innerHTML = '<option value="">— Select PDF —</option>' +
+      (d.files || []).map(f => `<option value="${esc(f.filename)}">${esc(f.filename)} (${f.size_kb} KB)</option>`).join('');
+  } catch(e) {}
+}
+
+async function runOcr() {
+  const filename = document.getElementById('ocr-file').value;
+  if (!filename) return;
+  const res = document.getElementById('ocr-results');
+  res.innerHTML = '<span class="spin"></span> Running OCR tiers…';
+  try {
+    const d = await (await fetch(`${API}/api/debug/ocr`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({filename, tier:'auto'})
+    })).json();
+    if (d.error) { res.innerHTML = `<div class="rc-item">✗ ${esc(d.error)}</div>`; return; }
+    const tiers = d.tiers || {};
+    res.innerHTML = Object.entries(tiers).map(([name, info]) => `
+      <div class="tier-card">
+        <div class="tier-header">
+          <span class="tier-name">${esc(name)}</span>
+          <span class="${info.ok?'tier-ok':'tier-err'}">${info.ok?'✓ OK':'✗ Failed'} · ${info.pages||0} pages · ${info.duration_ms||0}ms</span>
+        </div>
+        ${(info.sample||[]).map(p=>`
+          <div style="margin-bottom:8px">
+            <div style="font-size:11px;color:var(--txt3)">Page ${p.page} · ${p.words} words · ${p.lang}</div>
+            <div class="tier-preview">${esc(p.preview||'')}</div>
+          </div>`).join('')}
+      </div>`).join('');
+  } catch(e) {
+    res.innerHTML = `<div class="rc-item">✗ ${esc(String(e))}</div>`;
+  }
+}
+
+/* ── Ollama tester ────────────────────────────────────────────────────── */
+async function testOllama() {
+  const res = document.getElementById('ollama-results');
+  res.innerHTML = '<span class="spin"></span> Testing…';
+  try {
+    const d = await (await fetch(`${API}/api/debug/ollama`)).json();
+    res.innerHTML = `<div class="${d.ok?'rec-item':'rc-item'}">
+      ${d.ok?'✓':'✗'} Response: <strong>${esc(d.response||'null')}</strong>
+      <br><span style="font-family:var(--mono);font-size:10px">
+        model: ${esc(d.model||'?')} · url: ${esc(d.url||'?')} · ${d.latency_ms||'?'}ms
+      </span>
+    </div>`;
+  } catch(e) {
+    res.innerHTML = `<div class="rc-item">✗ ${esc(String(e))}</div>`;
+  }
+}
+
+async function testPrompt() {
+  const prompt = document.getElementById('ollama-prompt').value.trim();
+  if (!prompt) return;
+  const res = document.getElementById('prompt-result');
+  res.innerHTML = '<span class="spin"></span>';
+  try {
+    const d = await (await fetch(`${API}/api/debug/ollama`)).json();
+    // Reuse the status endpoint — for custom prompt, call /api/ask with the prompt as a question
+    const r = await (await fetch(`${API}/api/ask`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question: prompt})
+    })).json();
+    res.innerHTML = `<div style="font-size:13px;color:var(--txt);white-space:pre-wrap;word-break:break-word;background:var(--bg2);padding:10px;border-radius:var(--rs);border:.5px solid var(--border)">${esc(r.answer||r.error||'(no answer)')}</div>`;
+  } catch(e) {
+    res.innerHTML = `<div class="rc-item">✗ ${esc(String(e))}</div>`;
+  }
+}
+
+/* ── Reports ──────────────────────────────────────────────────────────── */
+async function loadReports() {
+  const list = document.getElementById('reports-list');
+  list.innerHTML = '<span class="spin"></span>';
+  try {
+    const files = await (await fetch(`${API}/api/debug/reports`)).json();
+    if (!files.length) {
+      list.innerHTML = '<div style="font-size:13px;color:var(--txt3)">No reports yet. Run debug queries first.</div>';
+      return;
+    }
+    list.innerHTML = files.map(f => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--rs);margin-bottom:5px;cursor:pointer" onclick="loadReport('${esc(f)}',this)">
+        <span style="font-family:var(--mono);font-size:12px">${esc(f)}</span>
+        <span style="font-size:11px;color:var(--txt3)">›</span>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="rc-item">✗ ${esc(String(e))}</div>`;
+  }
+}
+
+async function loadReport(filename, el) {
+  const existing = el.nextElementSibling;
+  if (existing && existing.classList.contains('report-detail')) {
+    existing.remove(); return;
+  }
+  document.querySelectorAll('.report-detail').forEach(d=>d.remove());
+  try {
+    const d = await (await fetch(`${API}/api/debug/reports/${encodeURIComponent(filename)}`)).json();
+    const box = document.createElement('div');
+    box.className = 'report-detail';
+    box.style.cssText = 'background:var(--bg2);border:.5px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:5px';
+    box.innerHTML = `
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px">Q: ${esc(d.question||'?')}</div>
+      ${(d.root_causes||[]).map(rc=>`<div class="rc-item" style="font-size:11px">${esc(rc)}</div>`).join('')}
+      ${(d.recommendations||[]).map(r=>`<div class="rec-item" style="font-size:11px">${esc(r)}</div>`).join('')}
+      <details style="margin-top:8px"><summary style="font-size:11px;color:var(--txt3);cursor:pointer">Full JSON</summary>
+      <pre style="font-family:var(--mono);font-size:10px;color:var(--txt2);white-space:pre-wrap;word-break:break-all;max-height:400px;overflow-y:auto;margin-top:6px">${esc(JSON.stringify(d,null,2))}</pre></details>`;
+    el.insertAdjacentElement('afterend', box);
+  } catch(e) {}
+}
+
+/* ── utils ────────────────────────────────────────────────────────────── */
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('q-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runDebug(); }
+});
+
+refreshStatus();
+setInterval(refreshStatus, 30000);
+</script>
+</body>
+</html>

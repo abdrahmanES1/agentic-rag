@@ -1,0 +1,54 @@
+{
+  "name": "Moroccan Government-Services Multilingual RAG Benchmark",
+  "version": "1.0",
+  "released": "2026-06-01",
+  "benchmark": {
+    "file": "benchmark_testset_v1.0.json",
+    "sha256": "2b22e5510b36a3c0ec12513922db03e68cb7092923238d1ee1e66b2c24bd1b33",
+    "n_items": 124,
+    "languages": {
+      "Arabizi": 28,
+      "Darija": 28,
+      "french": 28,
+      "arabic_msa": 40
+    },
+    "categories": {
+      "ARABIZI": 28,
+      "DARIJA": 28,
+      "SIMPLE": 28,
+      "LEGAL": 13,
+      "OUTSCOPE": 15,
+      "MULTIHOP": 12
+    },
+    "design": "language-balanced; french/Darija/Arabizi are 28 parallel procedures; arabic_msa=40 capability tracks (LEGAL/MULTIHOP/OUTSCOPE)",
+    "parallel_procedures": 28
+  },
+  "candidate_pool": {
+    "file": "benchmark_testset_gold.json",
+    "sha256": "5b35bbfbe1f324789291244af88da7e0b100da33215a27c57620fb7ad6d10f6e",
+    "n_items": 624,
+    "note": "full annotated pool the 124-item benchmark was curated from (stratified, seed=42)",
+    "languages": {
+      "arabic_msa": 309,
+      "french": 106,
+      "Darija": 107,
+      "Arabizi": 102
+    },
+    "categories": {
+      "OUTSCOPE": 156,
+      "SIMPLE": 201,
+      "DARIJA": 107,
+      "ARABIZI": 102,
+      "LEGAL": 13,
+      "MULTIHOP": 45
+    }
+  },
+  "reproducibility": {
+    "sampler": "make_sample.py",
+    "seed": 42
+  },
+  "sources": [
+    "idarati.ma (Moroccan public-service portal)",
+    "official decrees & codes (PDF)"
+  ]
+}

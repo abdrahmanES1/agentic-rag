@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moroccan RAG Pipeline v11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Spectral:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── reset & variables ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:      #0f1e3d;
+  --teal:      #0D6E6E;
+  --teal-lt:   #E1F5EE;
+  --teal-mid:  #1D9E75;
+  --teal-bdr:  #5DCAA5;
+  --amber:     #BA7517;
+  --amber-lt:  #FAEEDA;
+  --amber-bdr: #EF9F27;
+  --red:       #A32D2D;
+  --red-lt:    #FCEBEB;
+  --red-bdr:   #F09595;
+  --green:     #3B6D11;
+  --green-lt:  #EAF3DE;
+  --green-bdr: #97C459;
+  --blue-lt:   #E6F1FB;
+  --blue:      #185FA5;
+  --blue-bdr:  #85B7EB;
+  --purple-lt: #EEEDFE;
+  --purple:    #534AB7;
+  --purple-bdr:#AFA9EC;
+  --bg:        #ffffff;
+  --bg2:       #f7f7f5;
+  --bg3:       #f0efec;
+  --border:    rgba(0,0,0,0.10);
+  --border2:   rgba(0,0,0,0.18);
+  --txt:       #1a1a18;
+  --txt2:      #5c5c58;
+  --txt3:      #8f8f8a;
+  --sans:      'DM Sans', system-ui, sans-serif;
+  --serif:     'Spectral', Georgia, serif;
+  --mono:      'IBM Plex Mono', monospace;
+  --r:         12px;
+  --rm:        8px;
+  --rs:        5px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:    #161614;
+    --bg2:   #1f1f1c;
+    --bg3:   #282825;
+    --border:rgba(255,255,255,0.10);
+    --border2:rgba(255,255,255,0.18);
+    --txt:   #e8e8e2;
+    --txt2:  #9a9a94;
+    --txt3:  #5e5e58;
+    --teal:         #1D9E75;
+    --teal-lt:      #063d2c;
+    --teal-bdr:     #0D6E6E;
+    --amber-lt:     #3d2800;
+    --red-lt:       #3d0f0f;
+    --green-lt:     #1a2e08;
+    --blue-lt:      #0a1f38;
+    --purple-lt:    #1a1640;
+  }
+}
+html, body { height: 100%; font-family: var(--sans); font-size: 14px; color: var(--txt); background: var(--bg3); }
+
+/* ── app shell ──────────────────────────────────────────────────────────── */
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* ── top header ─────────────────────────────────────────────────────────── */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; border-bottom: 0.5px solid var(--border);
+  background: var(--bg); flex-shrink: 0; gap: 12px;
+}
+.hdr-brand { display: flex; align-items: center; gap: 10px; }
+.hdr-logo {
+  width: 32px; height: 32px; border-radius: 7px;
+  background: var(--teal); display: flex; align-items: center; justify-content: center;
+}
+.hdr-logo svg { width: 18px; height: 18px; }
+.hdr-title { font-family: var(--serif); font-size: 16px; font-weight: 600; }
+.hdr-version { font-family: var(--mono); font-size: 11px; color: var(--txt3); }
+.hdr-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.status-pill {
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 11px; padding: 3px 9px;
+  border-radius: 99px; border: 0.5px solid; cursor: default;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-green  { background: #639922; }
+.dot-red    { background: #A32D2D; }
+.dot-amber  { background: var(--amber); }
+.dot-grey   { background: var(--txt3); }
+.sp-ok   { background: var(--green-lt); color: var(--green); border-color: var(--green-bdr); }
+.sp-err  { background: var(--red-lt);   color: var(--red);   border-color: var(--red-bdr); }
+.sp-warn { background: var(--amber-lt); color: var(--amber); border-color: var(--amber-bdr); }
+.sp-grey { background: var(--bg2);      color: var(--txt3);  border-color: var(--border); }
+.hdr-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.hdr-btn {
+  font-size: 12px; font-family: var(--sans); padding: 5px 12px;
+  border: 0.5px solid var(--border2); border-radius: var(--rm);
+  background: var(--bg2); color: var(--txt); cursor: pointer; transition: all .12s;
+}
+.hdr-btn:hover { background: var(--bg3); }
+.hdr-btn.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+.hdr-btn.primary:hover { opacity: 0.85; }
+.hdr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── layout ─────────────────────────────────────────────────────────────── */
+.body { display: flex; flex: 1; overflow: hidden; }
+.sidebar {
+  width: 210px; flex-shrink: 0; border-right: 0.5px solid var(--border);
+  background: var(--bg2); display: flex; flex-direction: column; overflow-y: auto;
+}
+.content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ── sidebar nav ─────────────────────────────────────────────────────────── */
+.nav-sec {
+  padding: 14px 14px 6px;
+  font-size: 10px; font-weight: 500; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: .07em;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 14px; cursor: pointer; font-size: 13px; color: var(--txt2);
+  border-left: 2px solid transparent; transition: all .12s; user-select: none;
+}
+.nav-item:hover { background: var(--bg); color: var(--txt); }
+.nav-item.active { background: var(--bg); color: var(--teal); border-left-color: var(--teal); font-weight: 500; }
+.nav-icon { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.6; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-sep { height: 0.5px; background: var(--border); margin: 8px 14px; }
+
+/* ── kb widget ───────────────────────────────────────────────────────────── */
+.kb-box { padding: 10px 14px; }
+.kb-hd { font-size: 10px; font-weight: 500; color: var(--txt3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+.kb-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; font-size: 12px; color: var(--txt2); }
+.kb-left { display: flex; align-items: center; gap: 6px; }
+.kb-count { font-family: var(--mono); font-size: 11px; color: var(--txt3); }
+.kb-rebuild { width: 100%; margin-top: 10px; font-size: 12px; padding: 5px 0;
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--rm); color: var(--txt2); cursor: pointer; transition: all .12s; }
+.kb-rebuild:hover { border-color: var(--teal); color: var(--teal); }
+
+/* ── panels ──────────────────────────────────────────────────────────────── */
+.panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.panel.active { display: flex; }
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* CHAT PANEL                                                                 */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.chat-msgs {
+  flex: 1; overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.msg { display: flex; flex-direction: column; gap: 5px; }
+.msg-user { align-items: flex-end; }
+.msg-bot  { align-items: flex-start; }
+.bubble {
+  max-width: 78%; padding: 10px 14px;
+  border-radius: var(--r); font-size: 14px; line-height: 1.65;
+}
+.bubble-user { background: var(--teal); color: #fff; border-bottom-right-radius: 3px; }
+.bubble-bot  { background: var(--bg); border: 0.5px solid var(--border); color: var(--txt); border-bottom-left-radius: 3px; }
+.bubble-sys  { background: var(--bg2); border: 0.5px solid var(--border); color: var(--txt2); font-style: italic; font-size: 13px; max-width: 90%; border-radius: var(--rm); }
+
+.msg-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--txt3); }
+.tag { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 0.5px solid; }
+.t-lang     { background: var(--blue-lt);   color: var(--blue);   border-color: var(--blue-bdr); }
+.t-grounded { background: var(--green-lt);  color: var(--green);  border-color: var(--green-bdr); }
+.t-unground { background: var(--red-lt);    color: var(--red);    border-color: var(--red-bdr); }
+.t-translated{ background: var(--amber-lt); color: var(--amber);  border-color: var(--amber-bdr); }
+.t-abstained{ background: var(--purple-lt); color: var(--purple); border-color: var(--purple-bdr); }
+.t-intent   { background: var(--teal-lt);   color: var(--teal);   border-color: var(--teal-bdr); }
+.t-legal    { background: var(--red-lt);    color: var(--red);    border-color: var(--red-bdr); }
+.t-multihop { background: var(--amber-lt);  color: var(--amber);  border-color: var(--amber-bdr); }
+
+.src-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 3px; }
+.src-chip { font-family: var(--mono); font-size: 10px; padding: 2px 7px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 4px; color: var(--txt2); }
+
+/* audit card */
+.audit-card {
+  max-width: 78%; margin-top: 4px; padding: 10px 14px;
+  background: var(--bg); border: 0.5px solid var(--border);
+  border-radius: var(--rm); font-size: 12px;
+}
+.audit-card-title { font-size: 10px; font-weight: 500; color: var(--txt3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+.audit-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+.audit-kpi { text-align: center; padding: 6px; background: var(--bg2); border-radius: var(--rs); }
+.audit-kpi-val { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.audit-kpi-lbl { font-size: 9px; color: var(--txt3); margin-top: 2px; }
+.claims-list { display: flex; flex-direction: column; gap: 3px; }
+.claim-row { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: var(--txt2); padding: 3px 0; border-bottom: 0.5px solid var(--border); }
+.claim-row:last-child { border-bottom: none; }
+.claim-icon { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+.claim-text { flex: 1; line-height: 1.4; }
+.claim-score { font-family: var(--mono); font-size: 10px; color: var(--txt3); flex-shrink: 0; margin-top: 2px; }
+.bar-bg { height: 4px; border-radius: 99px; background: var(--bg3); overflow: hidden; margin-top: 3px; }
+.bar-fg { height: 100%; border-radius: 99px; }
+
+/* thinking loader */
+.thinking { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--rm); font-size: 12px; color: var(--txt2); width: fit-content; }
+.spin { width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: var(--teal); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.step-indicator { font-family: var(--mono); font-size: 10px; color: var(--teal); }
+
+/* input bar */
+.input-bar { padding: 12px 20px; border-top: 0.5px solid var(--border); background: var(--bg); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+.quick-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+.qbtn { font-size: 11px; font-family: var(--mono); padding: 3px 9px; border: 0.5px solid var(--border); border-radius: 99px; background: var(--bg2); color: var(--txt2); cursor: pointer; transition: all .12s; white-space: nowrap; }
+.qbtn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-lt); }
+.input-row { display: flex; gap: 8px; align-items: flex-end; }
+.textarea-wrap { flex: 1; position: relative; }
+.q-area { width: 100%; padding: 9px 38px 9px 12px; border: 0.5px solid var(--border2); border-radius: var(--rm); background: var(--bg2); color: var(--txt); font-family: var(--sans); font-size: 14px; resize: none; min-height: 40px; max-height: 120px; outline: none; transition: border .15s; overflow-y: auto; }
+.q-area:focus { border-color: var(--teal); }
+.char-ct { position: absolute; right: 10px; bottom: 9px; font-family: var(--mono); font-size: 10px; color: var(--txt3); }
+.send-btn { padding: 9px 16px; background: var(--teal); color: #fff; border: none; border-radius: var(--rm); cursor: pointer; font-family: var(--sans); font-size: 14px; font-weight: 500; transition: opacity .15s; display: flex; align-items: center; gap: 6px; height: 40px; flex-shrink: 0; }
+.send-btn:hover { opacity: 0.87; }
+.send-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* PIPELINE / GROUNDING / CONFIG PANELS — shared scrollable body             */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.scroll-panel { flex: 1; overflow-y: auto; padding: 20px; }
+.pnl-title { font-family: var(--serif); font-size: 19px; font-weight: 600; margin-bottom: 4px; }
+.pnl-sub { font-size: 13px; color: var(--txt2); margin-bottom: 20px; }
+.phase-lbl {
+  font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--txt3); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+}
+.phase-lbl::after { content:''; flex:1; height:.5px; background: var(--border); }
+
+/* step cards */
+.step-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px; }
+.step-card { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rm); transition: border .12s; }
+.step-card:hover { border-color: var(--teal); }
+.step-num { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; font-weight: 500; }
+.sn-off { background: var(--blue-lt);   color: var(--blue); }
+.sn-on  { background: var(--teal-lt);   color: var(--teal); }
+.sn-vfy { background: var(--amber-lt);  color: var(--amber); }
+.step-body { flex: 1; }
+.step-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.step-desc { font-size: 12px; color: var(--txt2); line-height: 1.5; }
+.step-badge { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 0.5px solid; align-self: flex-start; flex-shrink: 0; }
+.sb-blue   { background: var(--blue-lt);  color: var(--blue);   border-color: var(--blue-bdr); }
+.sb-teal   { background: var(--teal-lt);  color: var(--teal);   border-color: var(--teal-bdr); }
+.sb-amber  { background: var(--amber-lt); color: var(--amber);  border-color: var(--amber-bdr); }
+
+/* grounding threshold kpis */
+.th-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(0,1fr)); gap: 10px; margin-bottom: 20px; }
+.th-card { padding: 14px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rm); text-align: center; }
+.th-val { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--teal); }
+.th-lbl { font-size: 11px; color: var(--txt2); margin-top: 3px; }
+.th-chg { font-family: var(--mono); font-size: 10px; color: var(--green); margin-top: 4px; }
+
+/* layer rows */
+.layer-list { display: flex; flex-direction: column; gap: 4px; }
+.layer-row { display: flex; align-items: center; gap: 12px; padding: 9px 14px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rm); }
+.layer-num { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px; font-weight: 500; background: var(--amber-lt); color: var(--amber); }
+.layer-name { font-size: 13px; font-weight: 500; min-width: 190px; }
+.layer-desc { font-size: 12px; color: var(--txt2); flex: 1; }
+.layer-thr { font-family: var(--mono); font-size: 10px; color: var(--teal); background: var(--teal-lt); padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
+
+/* config */
+.cfg-sec { margin-bottom: 22px; }
+.cfg-sec-title { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: var(--txt3); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
+.cfg-table { width: 100%; border-collapse: collapse; }
+.cfg-table td { padding: 7px 0; border-bottom: 0.5px solid var(--border); vertical-align: middle; font-size: 13px; }
+.cfg-table tr:last-child td { border-bottom: none; }
+.cfg-key { font-family: var(--mono); font-size: 11px; color: var(--teal); width: 40%; }
+.cfg-val { width: 32%; }
+.cfg-desc { font-size: 12px; color: var(--txt2); width: 28%; }
+.cfg-input { font-family: var(--mono); font-size: 12px; padding: 4px 8px; border: 0.5px solid var(--border); border-radius: var(--rs); background: var(--bg2); color: var(--txt); outline: none; width: 120px; transition: border .12s; }
+.cfg-input:focus { border-color: var(--teal); }
+.toggle { width: 34px; height: 18px; border-radius: 99px; cursor: pointer; border: none; position: relative; transition: background .2s; }
+.toggle::after { content:''; position:absolute; width:14px; height:14px; border-radius:50%; background:#fff; top:2px; left:2px; transition: left .2s; }
+.toggle.on { background: var(--teal); }
+.toggle.on::after { left: 18px; }
+.toggle.off { background: #B4B2A9; }
+.save-btn { padding: 8px 18px; background: var(--teal); color:#fff; border:none; border-radius: var(--rm); cursor:pointer; font-size:13px; font-family: var(--sans); transition: opacity .15s; margin-top: 12px; }
+.save-btn:hover { opacity:.85; }
+.save-feedback { font-family: var(--mono); font-size: 11px; color: var(--green); margin-left: 10px; opacity: 0; transition: opacity .3s; }
+
+/* audit history */
+.audit-list { display: flex; flex-direction: column; gap: 6px; }
+.audit-file { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--rm); cursor: pointer; transition: border .12s; }
+.audit-file:hover { border-color: var(--teal); }
+.audit-file-name { font-family: var(--mono); font-size: 12px; color: var(--txt); }
+.audit-file-arrow { color: var(--txt3); font-size: 12px; }
+.audit-detail { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--rm); padding: 14px; margin-top: 8px; font-size: 12px; }
+.audit-detail pre { font-family: var(--mono); font-size: 11px; color: var(--txt2); white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; }
+
+/* scrollbar */
+.chat-msgs::-webkit-scrollbar, .scroll-panel::-webkit-scrollbar, .sidebar::-webkit-scrollbar { width: 4px; }
+.chat-msgs::-webkit-scrollbar-thumb, .scroll-panel::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── HEADER ── -->
+  <div class="hdr">
+    <div class="hdr-brand">
+      <div class="hdr-logo">
+        <svg viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="2.2" rx="1.1" fill="white"/><rect x="2" y="8" width="10" height="2.2" rx="1.1" fill="rgba(255,255,255,.6)"/><rect x="2" y="12" width="12" height="2.2" rx="1.1" fill="rgba(255,255,255,.4)"/></svg>
+      </div>
+      <div>
+        <div class="hdr-title">Moroccan RAG Pipeline</div>
+        <div class="hdr-version">v1</div>
+      </div>
+    </div>
+    <div class="hdr-status" id="hdr-status">
+      <div class="status-pill sp-grey"><div class="dot dot-grey"></div>checking…</div>
+    </div>
+    <div class="hdr-actions">
+      <button class="hdr-btn" onclick="refreshStatus()" title="Refresh status">&#8635; Status</button>
+      <!-- Mode toggle -->
+      <div style="display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rm)">
+        <span style="font-size:11px;color:var(--txt3);font-weight:500">⚡ Fast</span>
+        <button class="toggle off" id="mode-toggle" onclick="toggleMode(this)" title="Fast = stream answer immediately, verify in background\nResearch = full 11-layer sequential verification"></button>
+        <span style="font-size:11px;color:var(--txt3);font-weight:500">🔬 Research</span>
+      </div>
+      <button class="hdr-btn" onclick="switchNav('audit', document.querySelector('[data-nav=audit]'))">Audit Logs</button>
+    </div>
+  </div>
+
+  <!-- ── BODY ── -->
+  <div class="body">
+
+    <!-- sidebar -->
+    <div class="sidebar">
+      <div class="nav-sec">Panels</div>
+      <div class="nav-item active" data-nav="chat" onclick="switchNav('chat',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><path d="M1 1h13v9H8l-3 3v-3H1V1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Ask a Question
+      </div>
+      <div class="nav-item" data-nav="pipeline" onclick="switchNav('pipeline',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="2.5" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="7.5" cy="7.5" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="7.5" cy="12.5" r="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="7.5" y1="4" x2="7.5" y2="6" stroke="currentColor" stroke-width="1.2"/><line x1="7.5" y1="9" x2="7.5" y2="11" stroke="currentColor" stroke-width="1.2"/></svg>
+        Pipeline Steps
+      </div>
+      <div class="nav-item" data-nav="grounding" onclick="switchNav('grounding',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><path d="M7.5 1L14 5v5l-6.5 4L1 10V5L7.5 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Grounding Layers
+      </div>
+      <div class="nav-item" data-nav="config" onclick="switchNav('config',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 1v1M7.5 13v1M1 7.5h1M13 7.5h1M2.6 2.6l.7.7M11.7 11.7l.7.7M11.7 2.6l-.7.7M3.3 11.7l-.7.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Configuration
+      </div>
+      <div class="nav-item" data-nav="audit" onclick="switchNav('audit',this)">
+        <svg class="nav-icon" viewBox="0 0 15 15" fill="none"><rect x="2" y="1" width="11" height="13" rx="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="4.5" y1="5" x2="10.5" y2="5" stroke="currentColor" stroke-width="1.2"/><line x1="4.5" y1="7.5" x2="10.5" y2="7.5" stroke="currentColor" stroke-width="1.2"/><line x1="4.5" y1="10" x2="8" y2="10" stroke="currentColor" stroke-width="1.2"/></svg>
+        Audit Trails
+      </div>
+      <div class="nav-sep"></div>
+      <div class="kb-box">
+        <div class="kb-hd">Knowledge Base</div>
+        <div class="kb-row"><div class="kb-left"><div class="dot dot-grey" id="dot-ar"></div>Arabic BM25 + FAISS</div><span class="kb-count" id="kb-ar-count">–</span></div>
+        <div class="kb-row"><div class="kb-left"><div class="dot dot-grey" id="dot-fr"></div>French BM25 + FAISS</div><span class="kb-count" id="kb-fr-count">–</span></div>
+        <div class="kb-row"><div class="kb-left"><div class="dot dot-grey" id="dot-unified"></div>Unified FAISS (FIX 70)</div><span class="kb-count" id="kb-unified-count">–</span></div>
+        <div class="kb-row" style="margin-top:6px;gap:6px">
+          <span style="font-size:11px;color:var(--txt3)">Contextual retrieval</span>
+          <button class="toggle off" id="toggle-contextual" onclick="this.classList.toggle('on');this.classList.toggle('off')" style="font-size:10px;padding:2px 8px">OFF</button>
+        </div>
+        <button class="kb-rebuild" id="rebuild-btn" onclick="rebuildKB(false)">Reload KB</button>
+        <button class="kb-rebuild" style="margin-top:4px" onclick="rebuildKB(true)">Force Rebuild</button>
+      </div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+
+      <!-- ══ CHAT PANEL ══ -->
+      <div id="panel-chat" class="panel active">
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="msg msg-bot">
+            <div class="bubble bubble-sys">
+              Pipeline connected. Ask your question in <strong>Arabic (MSA)</strong>, <strong>French</strong>, <strong>Darija</strong>, or <strong>Arabizi</strong>. The pipeline detects your language automatically, translates if needed, retrieves from both indexes, generates via Gemma 4 E4B, and verifies with 11 grounding layers before returning an answer.
+            </div>
+          </div>
+        </div>
+        <div class="input-bar">
+          <div class="quick-btns">
+            <button class="qbtn" onclick="setQ('ما هي الوثائق المطلوبة للحصول على البطاقة الوطنية للتعريف؟')">AR · CNIE docs</button>
+            <button class="qbtn" onclick="setQ('Quels documents pour obtenir un passeport au Maroc?')">FR · passport</button>
+            <button class="qbtn" onclick="setQ('واش خاصني باش نخرج الكارط ديال التعريف؟')">Darija · CNIE</button>
+            <button class="qbtn" onclick="setQ('kifach ndir passport?')">Arabizi · passport</button>
+            <button class="qbtn" onclick="setQ('ما هي الوثائق المطلوبة للحصول على رخصة السياقة وكم تكلف وكم تستغرق؟')">AR · multi-hop</button>
+            <button class="qbtn" onclick="setQ('Quelle est la sanction pour conduite sans permis au Maroc?')">FR · legal</button>
+          </div>
+          <div class="input-row">
+            <div class="textarea-wrap">
+              <textarea class="q-area" id="q-area" rows="1" placeholder="Ask in Arabic, French, Darija, or Arabizi…" oninput="onInput(this)"></textarea>
+              <span class="char-ct" id="char-ct">0</span>
+            </div>
+            <button class="send-btn" id="send-btn" onclick="sendQ()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Send
+            </button>
+          </div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:4px;padding-left:2px" id="mode-label">⚡ Fast mode — answer streams immediately, verification runs in background</div>
+        </div>
+      </div>
+
+      <!-- ══ PIPELINE PANEL ══ -->
+      <div id="panel-pipeline" class="panel">
+        <div class="scroll-panel">
+          <div class="pnl-title">Pipeline — 11 Steps</div>
+          <div class="pnl-sub">Offline phase builds the knowledge base once. Online phase runs for every query against the real Ollama + Gemma 4 E4B backend.</div>
+          <div class="phase-lbl">Offline — runs once</div>
+          <div class="step-list">
+            <div class="step-card"><div class="step-num sn-off">1</div><div class="step-body"><div class="step-name">Load & Clean</div><div class="step-desc">PyMuPDF extracts text from PDFs. Scanned pages fall back to Tesseract OCR (Arabic + French). NFKC normalisation applied.</div></div><div class="step-badge sb-blue">PyMuPDF · Tesseract</div></div>
+            <div class="step-card"><div class="step-num sn-off">2</div><div class="step-body"><div class="step-name">Chunk Text</div><div class="step-desc">Sentences split on Arabic ،؟ and French .!? separators. 400-word chunks, 50-word overlap. Each chunk language-classified and routed to the correct index.</div></div><div class="step-badge sb-blue">400w · overlap 50</div></div>
+            <div class="step-card"><div class="step-num sn-off">3</div><div class="step-body"><div class="step-name">Embed & Index</div><div class="step-desc">BGE-M3 encodes chunks into 1024-dim vectors on GPU (auto-detected). Two FAISS IndexFlatIP + two language-specific BM25Okapi indexes built and saved to disk.</div></div><div class="step-badge sb-blue">BGE-M3 · FAISS · GPU</div></div>
+          </div>
+          <div class="phase-lbl" style="margin-top:4px">Online — runs per query</div>
+          <div class="step-list">
+            <div class="step-card"><div class="step-num sn-on">4</div><div class="step-body"><div class="step-name">Detect Language</div><div class="step-desc">5-signal ensemble: Darija markers (واش، بزاف، كاين…), Arabizi markers (wach, kifach…), script ratio, keyword scan, Lingua + langid. Outputs language + confidence score.</div></div><div class="step-badge sb-teal">5-signal ensemble</div></div>
+            <div class="step-card"><div class="step-num sn-on">5</div><div class="step-body"><div class="step-name">Translate Query</div><div class="step-desc">Only for Darija / Arabizi. Gemma 4 E4B translates to MSA Arabic so BM25 can match government vocabulary. Original query is kept for generation context.</div></div><div class="step-badge sb-amber">Darija → MSA</div></div>
+            <div class="step-card"><div class="step-num sn-on">6</div><div class="step-body"><div class="step-name">Classify & Route</div><div class="step-desc">Multi-label intent classification: DOCUMENTS, PROCEDURE, COST, DEADLINE, ELIGIBILITY, LEGAL, COMPARISON, OUT_OF_SCOPE. Sets SIMPLE / MULTIHOP flag that controls generation path.</div></div><div class="step-badge sb-teal">Ollama · multi-label</div></div>
+            <div class="step-card"><div class="step-num sn-on">7</div><div class="step-body"><div class="step-name">Hybrid Retrieval</div><div class="step-desc">BM25 (weight 0.4) + dense FAISS (weight 0.6) both searched. Scores fused with RRF (k=60). Top 10 ScoredChunks returned with full score breakdown. Score below threshold → abstain.</div></div><div class="step-badge sb-teal">BM25 + Dense + RRF</div></div>
+            <div class="step-card"><div class="step-num sn-on">8</div><div class="step-body"><div class="step-name">Rerank + Compress</div><div class="step-desc">bge-reranker-v2-m3 cross-encoder scores top 20 (query, chunk) pairs on GPU. Reranked top 5 become the generation context. Reranker score tracked per chunk.</div></div><div class="step-badge sb-teal">bge-reranker-v2-m3 · GPU</div></div>
+            <div class="step-card"><div class="step-num sn-on">9</div><div class="step-body"><div class="step-name">Generate — PlannerAgent</div><div class="step-desc">SIMPLE path: direct generation from context. MULTIHOP path: LLM generates an AgentPlan (steps, tools, rationale) then ToolRegistry dispatches 5 tools — retrieve_kb, lookup_article, calculate_deadline, check_eligibility, search_by_amount. After each tool _reflect() checks completeness and may trigger adaptive re-retrieval with a rephrased query.</div></div><div class="step-badge sb-teal">Plan → Execute → Reflect</div></div>
+            <div class="step-card"><div class="step-num sn-vfy">10</div><div class="step-body"><div class="step-name">Verify — 11 layers</div><div class="step-desc">Claim decomp → NLI per claim (mDeBERTa-XNLI, GPU) → entity extract → entity match → chain verify → LLM-judge → CFI score → citation injection → audit JSON with full grounding trace.</div></div><div class="step-badge sb-amber">mDeBERTa · LLM-judge · GPU</div></div>
+            <div class="step-card"><div class="step-num sn-on">11</div><div class="step-body"><div class="step-name">Output</div><div class="step-desc">PipelineResult returned with answer, language, grounding status, sources, latency, full execution trace (all tool calls + contexts), audit trail, and translation flag.</div></div><div class="step-badge sb-teal">PipelineResult</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ GROUNDING PANEL ══ -->
+      <div id="panel-grounding" class="panel">
+        <div class="scroll-panel">
+          <div class="pnl-title">11-Layer Grounding Architecture</div>
+          <div class="pnl-sub">Every answer passes all layers. A single entity mismatch or low claim ratio causes the pipeline to abstain rather than hallucinate.</div>
+          <div class="th-grid">
+            <div class="th-card"><div class="th-val">75%</div><div class="th-lbl">NLI entailment per claim</div><div class="th-chg">↑ from 50% in V10</div></div>
+            <div class="th-card"><div class="th-val">80%</div><div class="th-lbl">claims must be grounded</div><div class="th-chg">↑ new in V11</div></div>
+            <div class="th-card"><div class="th-val">100%</div><div class="th-lbl">entity exact match</div><div class="th-chg">↑ new in V11</div></div>
+            <div class="th-card"><div class="th-val">0.70</div><div class="th-lbl">CFI minimum</div><div class="th-chg">↑ new in V11</div></div>
+          </div>
+          <div class="layer-list">
+            <div class="layer-row"><div class="layer-num">1</div><div class="layer-name">Claim decomposition</div><div class="layer-desc">Gemma breaks the answer into atomic verifiable facts via structured prompt.</div><div class="layer-thr">LLM</div></div>
+            <div class="layer-row"><div class="layer-num">2</div><div class="layer-name">NLI per claim</div><div class="layer-desc">mDeBERTa-XNLI entailment check per claim vs top 5 context chunks. Multilingual AR + FR.</div><div class="layer-thr">≥ 0.75</div></div>
+            <div class="layer-row"><div class="layer-num">3</div><div class="layer-name">Entity extraction</div><div class="layer-desc">Regex extracts dates (Western + Arabic numerals), amounts (MAD/DH/درهم), Moroccan cities.</div><div class="layer-thr">regex</div></div>
+            <div class="layer-row"><div class="layer-num">4</div><div class="layer-name">Entity type verification</div><div class="layer-desc">Exact string match in chunk texts with Arabic ↔ Western numeral conversion.</div><div class="layer-thr">100% exact</div></div>
+            <div class="layer-row"><div class="layer-num">5</div><div class="layer-name">Relation preservation</div><div class="layer-desc">Entity co-occurrence in context verifies relationships (amount ↔ service) hold.</div><div class="layer-thr">implicit</div></div>
+            <div class="layer-row"><div class="layer-num">6</div><div class="layer-name">Multi-hop chain</div><div class="layer-desc">Each intermediate answer independently NLI-verified. Chain score = 1.0 if all pass.</div><div class="layer-thr">MULTIHOP</div></div>
+            <div class="layer-row"><div class="layer-num">7</div><div class="layer-name">LLM-as-judge</div><div class="layer-desc">Claims with NLI &lt; 0.65 re-evaluated by Gemma: SUPPORTED / PARTIALLY / NOT_SUPPORTED / CONTRADICTED.</div><div class="layer-thr">&lt; 0.65</div></div>
+            <div class="layer-row"><div class="layer-num">8</div><div class="layer-name">Confidence scoring</div><div class="layer-desc">Average confidence computed per claim, stored in audit metadata.</div><div class="layer-thr">avg</div></div>
+            <div class="layer-row"><div class="layer-num">9</div><div class="layer-name">Citation validation</div><div class="layer-desc">[Source: file.pdf] injected on grounded lines, validated against retrieved sources. Invalid → UNVERIFIED.</div><div class="layer-thr">source set</div></div>
+            <div class="layer-row"><div class="layer-num">10</div><div class="layer-name">Composite Fidelity Index</div><div class="layer-desc">CFI = 0.60 × entity_ratio + 0.40 × chain_score. Must be ≥ 0.70.</div><div class="layer-thr">≥ 0.70</div></div>
+            <div class="layer-row"><div class="layer-num">11</div><div class="layer-name">Audit trail</div><div class="layer-desc">GroundingAudit serialised to JSON in AUDIT_LOG_DIR per query.</div><div class="layer-thr">JSON</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CONFIG PANEL ══ -->
+      <div id="panel-config" class="panel">
+        <div class="scroll-panel">
+          <div class="pnl-title">Configuration</div>
+          <div class="pnl-sub">Changes are sent to the running pipeline via <code>POST /api/config</code> and take effect on the next query. Reload the pipeline to change model paths.</div>
+
+          <div class="cfg-sec">
+            <div class="cfg-sec-title">Ollama API</div>
+            <table class="cfg-table">
+              <tr><td class="cfg-key">OLLAMA_BASE_URL</td><td class="cfg-val"><input class="cfg-input" data-key="OLLAMA_BASE_URL" style="width:190px" value="http://localhost:11434/v1"/></td><td class="cfg-desc">Server endpoint</td></tr>
+              <tr><td class="cfg-key">GENERATOR_MODEL</td><td class="cfg-val"><input class="cfg-input" data-key="GENERATOR_MODEL" value="gemma4:e4b"/></td><td class="cfg-desc">Ollama model</td></tr>
+              <tr><td class="cfg-key">TEMPERATURE</td><td class="cfg-val"><input class="cfg-input" data-key="TEMPERATURE" type="number" step="0.01" min="0" max="1" value="0.05"/></td><td class="cfg-desc">Low = factual</td></tr>
+              <tr><td class="cfg-key">MAX_NEW_TOKENS</td><td class="cfg-val"><input class="cfg-input" data-key="MAX_NEW_TOKENS" type="number" value="600"/></td><td class="cfg-desc">Max tokens per call</td></tr>
+              <tr><td class="cfg-key">API_MAX_RETRIES</td><td class="cfg-val"><input class="cfg-input" data-key="API_MAX_RETRIES" type="number" min="1" max="10" value="3"/></td><td class="cfg-desc">Retry attempts</td></tr>
+            </table>
+          </div>
+
+          <div class="cfg-sec">
+            <div class="cfg-sec-title">Grounding Thresholds</div>
+            <table class="cfg-table">
+              <tr><td class="cfg-key">NLI_GROUNDING_THRESHOLD</td><td class="cfg-val"><input class="cfg-input" data-key="NLI_GROUNDING_THRESHOLD" type="number" step="0.01" min="0" max="1" value="0.75"/></td><td class="cfg-desc">Per-claim NLI min</td></tr>
+              <tr><td class="cfg-key">CLAIM_GROUNDED_RATIO</td><td class="cfg-val"><input class="cfg-input" data-key="CLAIM_GROUNDED_RATIO" type="number" step="0.01" min="0" max="1" value="0.80"/></td><td class="cfg-desc">Fraction required</td></tr>
+              <tr><td class="cfg-key">AMBIGUOUS_NLI_THRESHOLD</td><td class="cfg-val"><input class="cfg-input" data-key="AMBIGUOUS_NLI_THRESHOLD" type="number" step="0.01" min="0" max="1" value="0.65"/></td><td class="cfg-desc">Below → LLM-judge</td></tr>
+            </table>
+          </div>
+
+          <div class="cfg-sec">
+            <div class="cfg-sec-title">Retrieval</div>
+            <table class="cfg-table">
+              <tr><td class="cfg-key">RETRIEVE_TOP_K</td><td class="cfg-val"><input class="cfg-input" data-key="RETRIEVE_TOP_K" type="number" min="1" max="50" value="10"/></td><td class="cfg-desc">Chunks per index</td></tr>
+              <tr><td class="cfg-key">RERANKER_TOP_N</td><td class="cfg-val"><input class="cfg-input" data-key="RERANKER_TOP_N" type="number" min="1" max="50" value="20"/></td><td class="cfg-desc">Fed to reranker</td></tr>
+              <tr><td class="cfg-key">COMPRESS_TOP_N</td><td class="cfg-val"><input class="cfg-input" data-key="COMPRESS_TOP_N" type="number" min="1" max="20" value="5"/></td><td class="cfg-desc">Generation context</td></tr>
+              <tr><td class="cfg-key">BM25_WEIGHT</td><td class="cfg-val"><input class="cfg-input" data-key="BM25_WEIGHT" type="number" step="0.05" min="0" max="1" value="0.40"/></td><td class="cfg-desc">BM25 in RRF</td></tr>
+            </table>
+          </div>
+
+          <div class="cfg-sec">
+            <div class="cfg-sec-title">Feature Flags</div>
+            <table class="cfg-table">
+              <tr><td class="cfg-key">ENABLE_DARIJA</td><td class="cfg-val"><button class="toggle on" data-key="ENABLE_DARIJA" onclick="toggleFlag(this)"></button></td><td class="cfg-desc">Darija detection</td></tr>
+              <tr><td class="cfg-key">ENABLE_ARABIZI</td><td class="cfg-val"><button class="toggle on" data-key="ENABLE_ARABIZI" onclick="toggleFlag(this)"></button></td><td class="cfg-desc">Arabizi detection</td></tr>
+              <tr><td class="cfg-key">ENABLE_QUERY_TRANSLATION</td><td class="cfg-val"><button class="toggle on" data-key="ENABLE_QUERY_TRANSLATION" onclick="toggleFlag(this)"></button></td><td class="cfg-desc">Darija → MSA</td></tr>
+              <tr><td class="cfg-key">ENABLE_LLM_JUDGE</td><td class="cfg-val"><button class="toggle on" data-key="ENABLE_LLM_JUDGE" onclick="toggleFlag(this)"></button></td><td class="cfg-desc">LLM-as-judge</td></tr>
+              <tr><td class="cfg-key">ENABLE_AUDIT_TRAIL</td><td class="cfg-val"><button class="toggle on" data-key="ENABLE_AUDIT_TRAIL" onclick="toggleFlag(this)"></button></td><td class="cfg-desc">Save audit JSON</td></tr>
+              <tr><td class="cfg-key">ENABLE_ENTITY_VERIFICATION</td><td class="cfg-val"><button class="toggle on" data-key="ENABLE_ENTITY_VERIFICATION" onclick="toggleFlag(this)"></button></td><td class="cfg-desc">Entity layers 3–5</td></tr>
+              <tr><td class="cfg-key">ENABLE_CHAIN_VERIFICATION</td><td class="cfg-val"><button class="toggle on" data-key="ENABLE_CHAIN_VERIFICATION" onclick="toggleFlag(this)"></button></td><td class="cfg-desc">Chain layer 6</td></tr>
+            </table>
+          </div>
+
+          <button class="save-btn" onclick="saveConfig()">Save to Pipeline</button>
+          <span class="save-feedback" id="save-fb">✓ applied</span>
+        </div>
+      </div>
+
+      <!-- ══ AUDIT PANEL ══ -->
+      <div id="panel-audit" class="panel">
+        <div class="scroll-panel">
+          <div class="pnl-title">Audit Trails</div>
+          <div class="pnl-sub">Every verified answer generates a JSON audit file saved in AUDIT_LOG_DIR. Click any file to inspect its full grounding record.</div>
+          <div class="audit-list" id="audit-list">
+            <div style="font-size:13px;color:var(--txt3)">Loading audit files…</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<script>
+/* ── config ─────────────────────────────────────────────────────────────── */
+const API_BASE = 'http://localhost:5000';
+
+/* ── utils ──────────────────────────────────────────────────────────────── */
+function barColor(v) {
+  if (v >= 0.85) return '#639922';
+  if (v >= 0.70) return '#BA7517';
+  return '#A32D2D';
+}
+function langLabel(l) {
+  return {arabic_msa:'Arabic MSA',french:'French',Darija:'Darija',Arabizi:'Arabizi',mixed:'Mixed',unknown:'Unknown'}[l] || l;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function scrollBottom() {
+  const el = document.getElementById('chat-msgs');
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ── nav ─────────────────────────────────────────────────────────────────── */
+function switchNav(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'audit') loadAuditList();
+  if (id === 'config') loadConfig();
+}
+
+/* ── status ──────────────────────────────────────────────────────────────── */
+async function refreshStatus() {
+  try {
+    const r = await fetch(`${API_BASE}/api/status`);
+    const d = await r.json();
+    renderStatus(d);
+  } catch(e) {
+    document.getElementById('hdr-status').innerHTML =
+      `<div class="status-pill sp-err"><div class="dot dot-red"></div>API offline</div>`;
+  }
+}
+
+function renderStatus(d) {
+  const pills = [];
+  if (!d.pipeline_ready) {
+    pills.push(`<div class="status-pill sp-err"><div class="dot dot-red"></div>Pipeline error</div>`);
+  } else {
+    pills.push(`<div class="status-pill sp-ok"><div class="dot dot-green"></div>Pipeline ready</div>`);
+  }
+  pills.push(d.ollama_connected
+    ? `<div class="status-pill sp-ok"><div class="dot dot-green"></div>Ollama · ${esc(d.ollama_model)}</div>`
+    : `<div class="status-pill sp-warn"><div class="dot dot-amber"></div>Ollama unreachable</div>`);
+
+  const kb = d.kb || {};
+  const arOk      = kb.arabic;
+  const frOk      = kb.french;
+  const unifiedOk = kb.unified;
+  document.getElementById('dot-ar').className      = 'dot ' + (arOk      ? 'dot-green' : 'dot-red');
+  document.getElementById('dot-fr').className      = 'dot ' + (frOk      ? 'dot-green' : 'dot-red');
+  document.getElementById('dot-unified').className = 'dot ' + (unifiedOk ? 'dot-green' : 'dot-amber');
+  document.getElementById('kb-ar-count').textContent      = arOk      ? (kb.arabic_chunks  || 0) + ' chunks' : '–';
+  document.getElementById('kb-fr-count').textContent      = frOk      ? (kb.french_chunks  || 0) + ' chunks' : '–';
+  document.getElementById('kb-unified-count').textContent = unifiedOk ? (kb.total_chunks   || 0) + ' total'  : 'not built';
+
+  document.getElementById('hdr-status').innerHTML = pills.join('');
+}
+
+/* ── KB rebuild ──────────────────────────────────────────────────────────── */
+async function rebuildKB(force) {
+  const btn = document.getElementById('rebuild-btn');
+  const ctxEl = document.getElementById('toggle-contextual');
+  const contextual = ctxEl ? ctxEl.classList.contains('on') : false;
+  btn.disabled = true;
+  btn.textContent = 'Working…';
+  try {
+    const r = await fetch(`${API_BASE}/api/build-kb`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({force_rebuild: force, contextual_retrieval: contextual})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      refreshStatus();
+      btn.textContent = `Done (${d.elapsed_sec}s${d.contextual_retrieval ? ' · contextual' : ''})`;
+    } else {
+      btn.textContent = 'Error: ' + (d.error || '?');
+    }
+  } catch(e) {
+    btn.textContent = 'Connection error';
+  }
+  setTimeout(() => { btn.disabled = false; btn.textContent = 'Reload KB'; }, 3000);
+}
+
+/* ── chat ────────────────────────────────────────────────────────────────── */
+function setQ(text) {
+  const el = document.getElementById('q-area');
+  el.value = text;
+  document.getElementById('char-ct').textContent = text.length;
+  el.focus();
+}
+function onInput(el) {
+  document.getElementById('char-ct').textContent = el.value.length;
+}
+
+function toggleMode(btn) {
+  btn.classList.toggle('on');
+  btn.classList.toggle('off');
+  const isResearch = btn.classList.contains('on');
+  document.getElementById('mode-label').textContent = isResearch ? '🔬 Research mode' : '⚡ Fast mode';
+}
+
+function currentMode() {
+  return document.getElementById('mode-toggle').classList.contains('on') ? 'research' : 'fast';
+}
+
+async function sendQ() {
+  const area = document.getElementById('q-area');
+  const q = area.value.trim();
+  if (!q) return;
+
+  const btn  = document.getElementById('send-btn');
+  const mode = currentMode();
+  btn.disabled = true;
+  area.value = '';
+  document.getElementById('char-ct').textContent = '0';
+
+  const msgs = document.getElementById('chat-msgs');
+
+  // ── user bubble ──────────────────────────────────────────────────────────
+  const uDiv = document.createElement('div');
+  uDiv.className = 'msg msg-user';
+  uDiv.innerHTML = `<div class="bubble bubble-user">${esc(q)}</div>`;
+  msgs.appendChild(uDiv);
+  scrollBottom();
+
+  // ── bot placeholder ──────────────────────────────────────────────────────
+  const botDiv = document.createElement('div');
+  botDiv.className = 'msg msg-bot';
+  const modeLbl = mode === 'fast' ? '⚡ Generating answer…' : '🔬 Running 11-layer pipeline…';
+  botDiv.innerHTML = `<div class="thinking" id="thinking-spinner"><div class="spin"></div><span>${modeLbl}</span></div>`;
+  msgs.appendChild(botDiv);
+  scrollBottom();
+
+  if (mode === 'research') {
+    // ── RESEARCH MODE — plain JSON fetch (original behaviour) ─────────────
+    try {
+      const resp = await fetch(`${API_BASE}/api/ask`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: q, mode: 'research'})
+      });
+      const data = await resp.json();
+      botDiv.innerHTML = '';
+      if (data.error) {
+        botDiv.innerHTML = `<div class="bubble bubble-sys" style="border-color:var(--red-bdr);color:var(--red)">Error: ${esc(data.error)}</div>`;
+      } else {
+        renderResponse(data, botDiv, {mode: 'research', verifyDone: true});
+      }
+    } catch(e) {
+      botDiv.innerHTML = `<div class="bubble bubble-sys" style="border-color:var(--red-bdr);color:var(--red)">Could not reach API at ${esc(API_BASE)}.</div>`;
+    }
+    scrollBottom();
+    btn.disabled = false;
+    return;
+  }
+
+  // ── FAST MODE — SSE two-phase streaming ─────────────────────────────────
+  let answerRendered = false;
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/ask`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question: q, mode: 'fast'})
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({error: resp.statusText}));
+      botDiv.innerHTML = `<div class="bubble bubble-sys" style="border-color:var(--red-bdr);color:var(--red)">Error: ${esc(err.error || resp.statusText)}</div>`;
+      btn.disabled = false;
+      return;
+    }
+
+    const reader  = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let   buf     = '';
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream: true});
+
+      // SSE lines end with \n\n
+      const lines = buf.split('\n\n');
+      buf = lines.pop();  // keep incomplete last chunk
+
+      for (const block of lines) {
+        const dataLine = block.split('\n').find(l => l.startsWith('data: '));
+        if (!dataLine) continue;
+        let msg;
+        try { msg = JSON.parse(dataLine.slice(6)); } catch { continue; }
+
+        if (msg.event === 'answer') {
+          // ── Phase 1: render answer immediately ──────────────────────────
+          answerRendered = true;
+          botDiv.innerHTML = '';
+          renderResponse(msg.payload, botDiv, {mode: 'fast', verifyDone: false});
+          scrollBottom();
+          btn.disabled = false;   // re-enable input right away
+        }
+
+        else if (msg.event === 'verify') {
+          // ── Phase 2: update with verification results ────────────────────
+          const verifyBadge = botDiv.querySelector('#verify-badge');
+          if (verifyBadge) verifyBadge.remove();
+          // Re-render the audit card and grounding badge only
+          _updateVerification(botDiv, msg.payload);
+          scrollBottom();
+        }
+
+        else if (msg.event === 'verify_error') {
+          const verifyBadge = botDiv.querySelector('#verify-badge');
+          if (verifyBadge) {
+            verifyBadge.innerHTML = `<span class="tag t-unground">⚠ verify failed</span>`;
+          }
+        }
+
+        else if (msg.event === 'error') {
+          botDiv.innerHTML = `<div class="bubble bubble-sys" style="border-color:var(--red-bdr);color:var(--red)">Error: ${esc(msg.payload)}</div>`;
+          btn.disabled = false;
+          scrollBottom();
+        }
+      }
+    }
+  } catch(e) {
+    if (!answerRendered) {
+      botDiv.innerHTML = `<div class="bubble bubble-sys" style="border-color:var(--red-bdr);color:var(--red)">Could not reach API at ${esc(API_BASE)}. Make sure <code>api.py</code> is running.</div>`;
+      btn.disabled = false;
+    }
+  }
+  scrollBottom();
+}
+
+// Update only the verification parts of an already-rendered response bubble
+function _updateVerification(botDiv, d) {
+  // Update grounding badge
+  const groundingBadge = botDiv.querySelector('.grounding-badge');
+  if (groundingBadge) {
+    if (d.is_grounded) {
+      groundingBadge.className = 'tag t-grounded grounding-badge';
+      groundingBadge.textContent = '✓ grounded';
+    } else {
+      groundingBadge.className = 'tag t-unground grounding-badge';
+      groundingBadge.textContent = '✗ ungrounded';
+    }
+  }
+  // Inject or replace audit card
+  const existingAudit = botDiv.querySelector('.audit-card');
+  const newAudit = _buildAuditHtml(d.audit_trail);
+  if (newAudit) {
+    const tmpDiv = document.createElement('div');
+    tmpDiv.innerHTML = newAudit;
+    const newCard = tmpDiv.firstChild;
+    if (existingAudit) {
+      existingAudit.replaceWith(newCard);
+    } else {
+      botDiv.appendChild(newCard);
+    }
+  }
+  // Update latency display
+  const latEl = botDiv.querySelector('.latency-display');
+  if (latEl && d.total_latency) {
+    latEl.textContent = `${d.total_latency.toFixed(1)}s total · ${d.latency_sec.toFixed(1)}s gen`;
+  }
+}
+
+function renderResponse(d, target, opts = {}) {
+  // target can be either a msgs container (research) or a botDiv (fast)
+  // opts: { mode: 'fast'|'research', verifyDone: bool }
+  const mode       = opts.mode       ?? 'research';
+  const verifyDone = opts.verifyDone ?? true;
+
+  const div = (mode === 'research') ? document.createElement('div') : target;
+  if (mode === 'research') div.className = 'msg msg-bot';
+
+  // ── mode badge ────────────────────────────────────────────────────────────
+  const modeBadge = mode === 'fast'
+    ? `<span class="tag" style="background:#FFF7ED;color:#9A3412;border-color:#FDBA74;font-size:10px">⚡ fast</span>`
+    : `<span class="tag" style="background:#F5F3FF;color:#6D28D9;border-color:#C4B5FD;font-size:10px">🔬 research</span>`;
+
+  // ── verify pending badge (fast mode only, replaced when verify arrives) ──
+  const groundingTag = verifyDone
+    ? (d.is_abstained
+        ? `<span class="tag t-abstained grounding-badge">abstained</span>`
+        : d.is_grounded
+          ? `<span class="tag t-grounded grounding-badge">✓ grounded</span>`
+          : `<span class="tag t-unground grounding-badge">✗ ungrounded</span>`)
+    : `<span class="tag grounding-badge" id="verify-badge" style="background:var(--amber-lt);color:var(--amber);border-color:var(--amber-bdr)">
+         <span class="spin" style="width:8px;height:8px;border-width:1.5px;display:inline-block;vertical-align:middle;margin-right:4px"></span>verifying…
+       </span>`;
+
+  // ── latency display ───────────────────────────────────────────────────────
+  const latencyHtml = `<span class="latency-display" style="color:var(--txt3)">${d.latency_sec.toFixed(1)}s · ${d.agent_steps} hop${d.agent_steps !== 1 ? 's' : ''}</span>`;
+
+  // ── meta tags ─────────────────────────────────────────────────────────────
+  const planSrc = d.planning && d.planning.plan ? d.planning.plan.source : null;
+  const metaTags = [
+    modeBadge,
+    `<span class="tag t-lang">${esc(langLabel(d.language))} · ${Math.round(d.lang_confidence * 100)}%</span>`,
+    d.translation_used ? `<span class="tag t-translated">translated → MSA</span>` : '',
+    groundingTag,
+    planSrc ? `<span class="tag" style="background:var(--purple-lt);color:var(--purple);border-color:var(--purple-bdr)">plan:${esc(planSrc)}</span>` : '',
+    latencyHtml,
+  ].filter(Boolean).join('');
+
+  // ── intents ───────────────────────────────────────────────────────────────
+  let intentTags = '';
+  if (d.flags && d.flags.intents) {
+    intentTags = d.flags.intents.map(i => {
+      const cls = i === 'LEGAL' ? 't-legal' : i === 'OUT_OF_SCOPE' ? 't-abstained' : 't-intent';
+      return `<span class="tag ${cls}">${esc(i)}</span>`;
+    }).join(' ');
+    if (d.flags.MULTIHOP) intentTags += ` <span class="tag t-multihop">MULTIHOP (${d.flags.hop_count} hops)</span>`;
+  }
+
+  // ── answer bubble ─────────────────────────────────────────────────────────
+  const ansHtml = esc(d.answer)
+    .replace(/\n/g, '<br>')
+    .replace(/\[Source:\s*([^\]]+)\]/g, '<span class="src-chip" style="display:inline-block;margin-left:3px">$1</span>');
+
+  // ── sources ───────────────────────────────────────────────────────────────
+  const srcHtml = d.sources && d.sources.length
+    ? `<div class="src-row">${d.sources.map(s => `<span class="src-chip">${esc(s)}</span>`).join('')}</div>` : '';
+
+  // ── planning trace card ───────────────────────────────────────────────────
+  let planHtml = '';
+  if (d.planning && d.planning.plan && d.planning.plan.steps && d.planning.plan.steps.length) {
+    const plan    = d.planning.plan;
+    const facts   = d.planning.facts    || {};
+    const refls   = d.planning.reflections || [];
+    const scratch = d.planning.scratchpad  || [];
+
+    const TOOL_ICONS = {retrieve_kb:'🔍', lookup_article:'📜', calculate_deadline:'📅', check_eligibility:'✅', search_by_amount:'💰'};
+    const REFL_COLORS = {complete:'var(--green)', partial:'var(--amber)', not_found:'var(--red)'};
+
+    const stepsRows = plan.steps.map((s, i) => {
+      const icon = TOOL_ICONS[s.tool] || '🔧';
+      const refl = refls[i] || '';
+      const reflColor = REFL_COLORS[refl] || 'var(--txt3)';
+      const fact = facts[s.intent] ? facts[s.intent].slice(0, 100) + '…' : '';
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border)">
+        <div style="min-width:22px;text-align:center;font-size:13px;padding-top:1px">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:600;color:var(--navy)">
+            Step ${s.step_id} · <span style="color:var(--teal)">${esc(s.intent)}</span>
+            <span style="font-weight:400;color:var(--txt3);margin-left:4px">${esc(s.tool)}</span>
+            ${refl ? `<span style="margin-left:6px;color:${reflColor};font-size:10px">● ${esc(refl)}</span>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--txt2);margin-top:1px">${esc(s.sub_question)}</div>
+          ${fact ? `<div style="font-size:11px;color:var(--txt3);margin-top:2px;font-style:italic">${esc(fact)}</div>` : ''}
+          ${s.rationale ? `<div style="font-size:10px;color:var(--txt3);margin-top:2px">rationale: ${esc(s.rationale)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    const scratchId  = 'scratch_' + Date.now();
+    const scratchRows = scratch.map(l =>
+      `<div style="font-family:var(--mono);font-size:10px;color:var(--txt2);white-space:pre-wrap">${esc(l)}</div>`
+    ).join('');
+
+    planHtml = `<div class="audit-card" style="border-color:var(--purple-bdr);background:var(--purple-lt)">
+      <div class="audit-card-title" style="color:var(--purple)">
+        🧠 Execution Plan
+        <span style="font-weight:400;font-size:10px;margin-left:6px;color:var(--txt3)">source: ${esc(plan.source)} · ${plan.steps.length} steps</span>
+      </div>
+      ${stepsRows}
+      ${scratch.length ? `<div style="margin-top:6px">
+        <button onclick="document.getElementById('${scratchId}').style.display=document.getElementById('${scratchId}').style.display==='none'?'block':'none'"
+          style="font-size:10px;background:none;border:1px solid var(--border2);border-radius:4px;padding:2px 8px;cursor:pointer;color:var(--txt3)">
+          Toggle scratchpad (${scratch.length} lines)
+        </button>
+        <div id="${scratchId}" style="display:none;margin-top:6px;background:var(--bg3);border-radius:6px;padding:8px;max-height:200px;overflow-y:auto">
+          ${scratchRows}
+        </div>
+      </div>` : ''}
+    </div>`;
+  }
+
+  // ── audit card (only rendered when verify is done) ────────────────────────
+  const auditHtml = verifyDone ? (_buildAuditHtml(d.audit_trail) || '') : `
+    <div class="audit-card" style="border-color:var(--amber-bdr);background:var(--amber-lt)">
+      <div class="audit-card-title" style="color:var(--amber)">
+        <span class="spin" style="width:9px;height:9px;border-width:1.5px;display:inline-block;vertical-align:middle;margin-right:6px"></span>
+        Verification running in background…
+        <span style="font-weight:400;font-size:10px;margin-left:6px;color:var(--txt3)">11-layer NLI + entity check</span>
+      </div>
+      <div style="font-size:11px;color:var(--amber);margin-top:4px">CFI · Claims · Entities will appear when complete</div>
+    </div>`;
+
+  div.innerHTML = `
+    <div class="msg-meta">${metaTags}</div>
+    ${intentTags ? `<div class="msg-meta" style="margin-top:2px">${intentTags}</div>` : ''}
+    <div class="bubble bubble-bot" style="max-width:88%">${ansHtml}</div>
+    ${srcHtml}
+    ${planHtml}
+    ${auditHtml}
+  `;
+
+  if (mode === 'research') target.appendChild(div);
+}
+
+function _buildAuditHtml(a) {
+  if (!a) return '';
+  const cfiColor   = barColor(a.composite_fidelity_index);
+  const claimColor = barColor(a.claim_grounded_ratio);
+  const entColor   = barColor(a.entity_match_ratio);
+
+  const claimsRows = (a.claims || []).slice(0, 5).map(c => {
+    const icon = c.grounded ? '✓' : '✗';
+    const iconColor = c.grounded ? 'var(--green)' : 'var(--red)';
+    const pct  = Math.round(c.nli_score * 100);
+    const barW = Math.round(c.confidence * 100);
+    const barC = barColor(c.confidence);
+    return `<div class="claim-row">
+      <span class="claim-icon" style="color:${iconColor}">${icon}</span>
+      <div class="claim-text">${esc(c.claim.length > 80 ? c.claim.slice(0,80)+'…' : c.claim)}<div class="bar-bg"><div class="bar-fg" style="width:${barW}%;background:${barC}"></div></div></div>
+      <span class="claim-score">${pct}% · ${esc(c.method)}</span>
+    </div>`;
+  }).join('');
+
+  const entRows = (a.entities || []).slice(0, 4).map(e => {
+    const ok = e.exact_match;
+    return `<span class="src-chip" style="${ok ? 'border-color:var(--green-bdr);color:var(--green)' : 'border-color:var(--red-bdr);color:var(--red)'}">
+      ${ok ? '✓' : '✗'} ${esc(e.entity)} (${esc(e.entity_type)})
+    </span>`;
+  }).join('');
+
+  const warnings = (a.warnings || []).map(w =>
+    `<div style="font-size:11px;color:var(--amber);margin-top:3px">⚠ ${esc(w)}</div>`
+  ).join('');
+
+  return `<div class="audit-card">
+    <div class="audit-card-title">Grounding audit — 11 layers</div>
+    <div class="audit-kpis">
+      <div class="audit-kpi"><div class="audit-kpi-val" style="color:${cfiColor}">${a.composite_fidelity_index.toFixed(2)}</div><div class="audit-kpi-lbl">CFI</div></div>
+      <div class="audit-kpi"><div class="audit-kpi-val" style="color:${claimColor}">${Math.round(a.claim_grounded_ratio*100)}%</div><div class="audit-kpi-lbl">Claims grounded</div></div>
+      <div class="audit-kpi"><div class="audit-kpi-val" style="color:${entColor}">${Math.round(a.entity_match_ratio*100)}%</div><div class="audit-kpi-lbl">Entity match</div></div>
+      <div class="audit-kpi"><div class="audit-kpi-val">${(a.metadata && a.metadata.num_claims) || '—'}</div><div class="audit-kpi-lbl">Total claims</div></div>
+    </div>
+    ${a.claims && a.claims.length ? `<div style="font-size:10px;font-weight:500;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Claims</div><div class="claims-list">${claimsRows}</div>` : ''}
+    ${a.entities && a.entities.length ? `<div style="font-size:10px;font-weight:500;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 4px">Entities</div><div class="src-row">${entRows}</div>` : ''}
+    ${warnings}
+  </div>`;
+}
+
+/* ── config ──────────────────────────────────────────────────────────────── */
+async function loadConfig() {
+  try {
+    const r = await fetch(`${API_BASE}/api/config`);
+    const cfg = await r.json();
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const k = el.dataset.key;
+      if (!(k in cfg)) return;
+      if (el.tagName === 'BUTTON') {
+        el.className = 'toggle ' + (cfg[k] ? 'on' : 'off');
+      } else {
+        el.value = cfg[k];
+      }
+    });
+  } catch(e) { /* API offline */ }
+}
+
+function toggleFlag(btn) {
+  btn.classList.toggle('on');
+  btn.classList.toggle('off');
+}
+
+async function saveConfig() {
+  const payload = {};
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const k = el.dataset.key;
+    if (el.tagName === 'BUTTON') {
+      payload[k] = el.classList.contains('on');
+    } else {
+      const v = el.value;
+      payload[k] = isNaN(v) || v === '' ? v : parseFloat(v);
+    }
+  });
+  try {
+    const r = await fetch(`${API_BASE}/api/config`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    const fb = document.getElementById('save-fb');
+    if (d.rejected && Object.keys(d.rejected).length) {
+      fb.style.color = 'var(--amber)';
+      fb.textContent = '⚠ ' + Object.keys(d.rejected).join(', ') + ' rejected';
+    } else {
+      fb.style.color = 'var(--green)';
+      fb.textContent = '✓ applied';
+    }
+    fb.style.opacity = '1';
+    setTimeout(() => { fb.style.opacity = '0'; }, 2500);
+  } catch(e) {
+    const fb = document.getElementById('save-fb');
+    fb.style.color = 'var(--red)'; fb.textContent = '✗ API error'; fb.style.opacity = '1';
+    setTimeout(() => { fb.style.opacity = '0'; }, 2500);
+  }
+}
+
+/* ── audit ───────────────────────────────────────────────────────────────── */
+async function loadAuditList() {
+  const list = document.getElementById('audit-list');
+  list.innerHTML = '<div style="font-size:13px;color:var(--txt3)">Loading…</div>';
+  try {
+    const r = await fetch(`${API_BASE}/api/audit`);
+    const files = await r.json();
+    if (!files.length) {
+      list.innerHTML = '<div style="font-size:13px;color:var(--txt3)">No audit files yet. Run some queries first.</div>';
+      return;
+    }
+    list.innerHTML = files.map(f =>
+      `<div class="audit-file" onclick="loadAuditFile('${esc(f)}', this)">
+        <span class="audit-file-name">${esc(f)}</span>
+        <span class="audit-file-arrow">›</span>
+      </div>`
+    ).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--red)">Could not load audit list. Is the API running?</div>';
+  }
+}
+
+async function loadAuditFile(filename, el) {
+  const existing = el.nextElementSibling;
+  if (existing && existing.classList.contains('audit-detail')) {
+    existing.remove(); return;
+  }
+  document.querySelectorAll('.audit-detail').forEach(d => d.remove());
+  try {
+    const r = await fetch(`${API_BASE}/api/audit/${encodeURIComponent(filename)}`);
+    const data = await r.json();
+    const box = document.createElement('div');
+    box.className = 'audit-detail';
+    box.innerHTML = `<pre>${esc(JSON.stringify(data, null, 2))}</pre>`;
+    el.insertAdjacentElement('afterend', box);
+  } catch(e) {
+    const box = document.createElement('div');
+    box.className = 'audit-detail';
+    box.innerHTML = `<span style="color:var(--red)">Error loading file.</span>`;
+    el.insertAdjacentElement('afterend', box);
+  }
+}
+
+/* ── keyboard shortcut ───────────────────────────────────────────────────── */
+document.getElementById('q-area').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQ(); }
+});
+
+/* ── init ────────────────────────────────────────────────────────────────── */
+refreshStatus();
+setInterval(refreshStatus, 30000);
+</script>
+</body>
+</html>

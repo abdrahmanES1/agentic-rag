@@ -1,0 +1,71 @@
+# ── Core ML models ────────────────────────────────────────────────────────────
+# torch: choose ONE of the blocks below based on your hardware.
+#
+# GPU (CUDA 12.4 — recommended for torch>=2.6, run this separately):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+#
+# GPU (CUDA 12.1 — only goes up to torch 2.5.1, not recommended):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+# GPU (CUDA 11.8):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#
+# CPU-only fallback (slowest, use only if no GPU):
+torch>=2.6.0
+torchvision>=0.21.0
+
+sentence-transformers>=3.0.0
+transformers>=4.40.0
+accelerate>=0.30.0
+safetensors>=0.4.0
+tokenizers>=0.19.0
+
+# ── Vector search ─────────────────────────────────────────────────────────────
+# faiss-cpu and torch both ship libiomp5md on Windows → set KMP_DUPLICATE_LIB_OK=TRUE
+# For GPU (Linux only): replace with faiss-gpu
+faiss-cpu>=1.7.4
+
+# ── BM25 retrieval ────────────────────────────────────────────────────────────
+rank-bm25>=0.2.2
+
+# ── LLM client (Ollama via OpenAI-compatible API) ─────────────────────────────
+openai>=1.30.0
+
+# ── Config & validation ───────────────────────────────────────────────────────
+pydantic>=2.5.0
+pydantic-settings>=2.2.0
+
+# ── API ───────────────────────────────────────────────────────────────────────
+Flask>=3.0.0
+flask-cors>=4.0.0
+
+# ── Language detection (5-signal ensemble) ────────────────────────────────────
+langdetect>=1.0.9
+langid>=1.1.6
+lingua-language-detector>=2.0.0
+
+# ── Document ingestion ────────────────────────────────────────────────────────
+PyMuPDF>=1.23.0          # fitz — fast PDF text extraction
+pdf2image>=1.16.0        # PDF page → PIL image (for OCR)
+Pillow>=10.0.0           # image processing
+pytesseract>=0.3.10      # Tesseract OCR wrapper (requires Tesseract binary)
+
+# ── Numerical ─────────────────────────────────────────────────────────────────
+numpy>=1.26.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+
+# ── Benchmarking ──────────────────────────────────────────────────────────────
+requests>=2.31.0
+beautifulsoup4>=4.12.0       # HTML scraping for dataset_scraper
+lxml>=5.0.0                  # fast HTML parser backend for BeautifulSoup
+datasets>=2.18.0
+ragas>=0.1.0
+tabulate>=0.9.0
+bert-score>=0.3.13          # BERTScore multilingual (xlm-roberta-large); pip install bert-score
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+arabic-reshaper>=3.0.0
+python-bidi>=0.4.2

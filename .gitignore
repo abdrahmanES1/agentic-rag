@@ -1,0 +1,82 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+benchmarking/venv_ragas/
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+*.env
+secrets.json
+credentials.json
+
+# ── Knowledge base indexes (large binary files — rebuild from PDFs) ────────────
+indexes/
+*.faiss
+*.pkl
+*.index
+
+# ── PDF source documents ───────────────────────────────────────────────────────
+pdfs/
+*.pdf
+
+# ── Benchmark results (raw outputs — large, generated) ────────────────────────
+benchmarking/results/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Model cache (HuggingFace, sentence-transformers) ──────────────────────────
+.cache/
+models/
+*.bin
+*.safetensors
+*.onnx
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Pytest / coverage ─────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Temporary files ───────────────────────────────────────────────────────────
+*.tmp
+*.bak
+*.orig
+
+# ── Large generated / vendored (not part of the research deliverable) ─────────
+audit_logs/
+benchmarking/backup/
+benchmarking/opendataloader/
+benchmarking/scraper/runs/
+.claude/
+# pre-correction dataset snapshots (working backups, superseded by v1.0)
+*.backup.json
+benchmark_testset_gold.pre_apply_*.json
