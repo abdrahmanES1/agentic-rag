@@ -794,6 +794,21 @@ def compute_retrieval_quality(
 # 2f. Domain precision metrics (Morocco-specific)
 # ══════════════════════════════════════════════════════════════════════════════
 
+_CITATION_RE = re.compile(r"\[Source:[^\]]*\]", re.IGNORECASE)
+_URL_RE = re.compile(r"https?://\S+")
+
+
+def _strip_citations(text: str) -> str:
+    """
+    Remove [Source:…] tags and bare URLs before scoring. v12 injects citation
+    URLs into answers, whose long path/UUID fragments otherwise (a) pollute
+    token_f1/rouge as junk tokens and (b) make URL digits count as hallucinated
+    numbers. Citations are metadata, not answer content — strip them for a fair
+    comparison across all systems.
+    """
+    return _URL_RE.sub("", _CITATION_RE.sub("", text or ""))
+
+
 def compute_domain_precision(
     results: List[Dict],
     gold_items: List[Dict],
@@ -812,7 +827,7 @@ def compute_domain_precision(
     _NUMBER_RE = re.compile(r'\b\d[\d,\.]*\b')
 
     for result, gold in zip(results, gold_items):
-        answer   = result.get("answer", "")
+        answer   = _strip_citations(result.get("answer", ""))
         category = gold.get("category", "")
         language = gold.get("language", "")
         keywords = gold.get("gold_keywords", [])
@@ -884,7 +899,7 @@ def compute_cross_lingual_consistency(
         source = gold.get("source", "")
         lang   = gold.get("language", "")
         if source and lang:
-            by_source[source][lang] = token_f1(result.get("answer", ""),
+            by_source[source][lang] = token_f1(_strip_citations(result.get("answer", "")),
                                                gold.get("gold_answer", ""))
 
     consistencies = []
@@ -950,7 +965,7 @@ def compute_lexical_scores(
     """Average EM, Token-F1, ROUGE-L across the dataset."""
     em, f1, rl = [], [], []
     for result, gold in zip(results, gold_items):
-        pred = result.get("answer", "")
+        pred = _strip_citations(result.get("answer", ""))
         ref  = gold.get(gold_answer_key, "")
         em.append(exact_match(pred, ref))
         f1.append(token_f1(pred, ref))

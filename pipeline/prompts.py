@@ -35,12 +35,23 @@ INTENT_SECTIONS_DA: Dict[str, str] = {
     "LEGAL": "العقوبات:\nذكر العقوبات بالضبط. زيد [Source:...] بعد كل عقوبة.\n\n",
     "COMPARISON": "المقارنة:\n[الأول]: ... [الثاني]: ... [الفرق]: ...\nزيد [Source:...] بعد كل نقطة.\n\n",
 }
+INTENT_SECTIONS_AZ: Dict[str, str] = {
+    "DOCUMENTS": "lwata2i9 lmatluba:\nList the required documents in points (in Arabizi). Add [Source:...] after each.\n\n",
+    "PROCEDURE": "lkhatawat:\nList the steps in order (in Arabizi). Add [Source:...] after each.\n\n",
+    "COST": "ttaklfa:\nState the exact amounts and fees only. Add [Source:...] after each amount.\n\n",
+    "DEADLINE": "lmoda:\nState the exact duration only. Add [Source:...] after each.\n\n",
+    "ELIGIBILITY": "chchorot:\nState who can apply and the conditions (in Arabizi). Add [Source:...] after each.\n\n",
+    "LEGAL": "l3o9oubat:\nState the legal penalties precisely (in Arabizi). Add [Source:...] after each.\n\n",
+    "COMPARISON": "lmo9arana:\n[1]: ... [2]: ... [lfar9]: ...\nAdd [Source:...] after each point.\n\n",
+}
 
 
 def get_intent_sections(language: str) -> Dict[str, str]:
     if language == "Darija":
         return INTENT_SECTIONS_DA
-    if language in ("arabic_msa", "Arabizi"):
+    if language == "Arabizi":
+        return INTENT_SECTIONS_AZ
+    if language == "arabic_msa":
         return INTENT_SECTIONS_AR
     return INTENT_SECTIONS_FR
 
@@ -51,13 +62,13 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     if language == "Darija":
         return (
             "أنت مساعد إداري رسمي متخصص في الخدمات العامة المغربية.\n"
-            "مهمتك: جاوب على سؤال المواطن بناءً على الوثائق الرسمية فقط.\n\n"
+            "مهمتك: جاوب على سؤال المواطن مباشرة وباختصار بناءً على الوثائق الرسمية فقط.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. جاوب بالدارجة المغربية فقط.\n"
+            "1. جاوب مباشرة بلا مقدمة وبلا 'بصفتي مساعد' ولا 'يسرني'؛ ابدأ فوراً بالمعلومة، وبالدارجة المغربية فقط.\n"
             "2. استعمل غير المعلومات لي كاينة فالوثائق — ماتزيدش حاجة من عندك.\n"
             "3. الوثائق يمكن تكون بالعربية أو الفرنسية — الزوج مصدر رسمي — اقراهم كلهم.\n"
             "4. إلا لقيتي وثيقة بالفرنسية تجاوب السؤال: استعملها وترجمها للدارجة.\n"
-            "5. إلا ماكانتش المعلومة فالوثائق: قول 'هاد المعلومة ماكاينةش فالوثائق المتاحة.'\n"
+            "5. استخرج كل معلومة كاتجاوب على السؤال من الوثائق. قول 'هاد المعلومة ماكاينةش فالوثائق المتاحة' غير إلا ماكانت حتى معلومة مرتبطة بالسؤال.\n"
             "6. زيد [Source: filename.pdf] بعد كل معلومة مباشرة.\n\n"
             f"الوثائق الرسمية:\n{context}\n\n"
             f"سؤال المواطن: {question}\n\n"
@@ -66,13 +77,13 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     if language == "arabic_msa":
         return (
             "أنت مساعد إداري رسمي متخصص في الخدمات العامة المغربية.\n"
-            "مهمتك: الإجابة على سؤال المواطن بناءً على الوثائق الرسمية المقدمة فقط.\n\n"
+            "مهمتك: الإجابة على سؤال المواطن مباشرة وباختصار بناءً على الوثائق الرسمية المقدمة فقط.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. اكتب إجابتك بالعربية الفصحى فقط.\n"
+            "1. أجب مباشرة بدون مقدمة وبدون 'بصفتي مساعد' أو 'يسرني'؛ ابدأ فوراً بالمعلومة، وبالعربية الفصحى فقط.\n"
             "2. لا تخترع أي معلومة غير موجودة في الوثائق — هذا محظور تماماً.\n"
             "3. الوثائق قد تكون بالعربية أو الفرنسية — كلاهما مصدر رسمي صالح — اقرأ الجميع.\n"
             "4. إذا وجدت وثيقة بالفرنسية تجيب على السؤال: استخدمها وترجمها للعربية.\n"
-            "5. إذا لم تجد المعلومة في الوثائق: قل 'هذه المعلومة غير متوفرة في الوثائق المتاحة.'\n"
+            "5. استخرج كل معلومة تجيب على السؤال من الوثائق. قل 'هذه المعلومة غير متوفرة في الوثائق المتاحة' فقط إذا لم تكن هناك أي معلومة ذات صلة بالسؤال.\n"
             "6. أضف [Source: filename.pdf] بعد كل معلومة مباشرة.\n\n"
             f"الوثائق الرسمية:\n{context}\n\n"
             f"سؤال المواطن: {question}\n\n"
@@ -81,13 +92,13 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     if language == "Arabizi":
         return (
             "You are an official administrative assistant specialized in Moroccan public services.\n"
-            "Mission: answer the citizen's question using Moroccan Darija in Arabizi with clear words.\n\n"
+            "Mission: answer the citizen's question directly and concisely, using Moroccan Darija in Arabizi.\n\n"
             "🔴 Mandatory rules:\n"
-            "1. Write your answer ONLY in Moroccan Darija in Arabizi.\n"
+            "1. Answer directly: no intro, no 'As an assistant' or 'I am pleased to'. Start immediately with the information, ONLY in Moroccan Darija in Arabizi.\n"
             "2. Do NOT invent ANY information absent from the documents — strictly forbidden.\n"
             "3. Documents may be in Arabic or French — both are valid official sources — read all.\n"
             "4. If you find a French document answering the question: use it and translate to Arabizi.\n"
-            "5. If information is missing: say 'had lma3luma makaynach f lwatha2eq lmota7.'\n"
+            "5. Extract every piece of info that answers the question from the documents. Say 'had lma3luma makaynach f lwatha2eq lmota7' ONLY if nothing relevant to the question exists.\n"
             "6. Add [Source: filename.pdf] immediately after each fact.\n\n"
             f"Official documents:\n{context}\n\n"
             f"Citizen question: {question}\n\n"
@@ -96,13 +107,13 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     # French
     return (
         "Vous êtes un assistant administratif officiel spécialisé dans les services publics marocains.\n"
-        "Votre mission: répondre à la question du citoyen en vous basant UNIQUEMENT sur les documents officiels fournis.\n\n"
+        "Votre mission: répondre à la question du citoyen directement et brièvement, en vous basant UNIQUEMENT sur les documents officiels fournis.\n\n"
         "🔴 Règles impératives:\n"
-        "1. Rédigez votre réponse UNIQUEMENT en français.\n"
+        "1. Répondez directement: pas d'introduction, pas de 'En tant qu'assistant' ni 'J'ai le plaisir'. Commencez immédiatement par l'information, UNIQUEMENT en français.\n"
         "2. N'inventez AUCUNE information absente des documents — strictement interdit.\n"
         "3. Les documents peuvent être en arabe ou en français — les deux sont des sources officielles valides.\n"
         "4. Si un document en arabe répond à la question: utilisez-le et traduisez son contenu en français.\n"
-        "5. Si l'information est absente: indiquez 'Cette information n'est pas disponible dans les documents fournis.'\n"
+        "5. Extrayez des documents toute information qui répond à la question. N'indiquez 'Cette information n'est pas disponible dans les documents fournis' QUE si rien de pertinent n'existe.\n"
         "6. Ajoutez [Source: filename.pdf] immédiatement après chaque information.\n\n"
         f"Documents officiels:\n{context}\n\n"
         f"Question du citoyen: {question}\n\n"
@@ -110,47 +121,69 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     )
 
 
-def synthesis_prompt(question: str, facts_context: str, section_instructions: str, language: str) -> str:
+def synthesis_prompt(question: str, facts_context: str, section_instructions: str, language: str, retrieved_context: str = "") -> str:
     if language == "Darija":
         return (
-            "أنت مساعد إداري رسمي. مهمتك: اجمع الأجوبة الجزئية في جواب واحد شامل ومنظم.\n\n"
+            "أنت مساعد إداري رسمي. مهمتك: عطي جواب واحد مختصر ومباشر على السؤال، معتمد على الوثائق الرسمية والأجوبة الجزئية.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. اكتب الجواب النهائي بالدارجة المغربية فقط.\n"
-            "2. استعمل غير المعلومات لي كاينة فالأجوبة الجزئية — ماتزيدش حاجة من عندك.\n"
-            "3. حافظ على [Source: filename.pdf] كما هي في كل مكان.\n"
-            "4. ماتكررش نفس المعلومة في أقسام مختلفة.\n"
-            "5. رتب الأقسام بالترتيب الطبيعي: الوثائق → الخطوات → التكلفة → المدة.\n\n"
+            "1. جاوب مباشرة وباختصار بالدارجة المغربية فقط. بلا مقدمة وبلا 'بصفتي مساعد' ولا 'يسرني'.\n"
+            "2. استخرج المعلومة لي كاتجاوب على السؤال من الوثائق الرسمية مباشرة. حتى إلا واحد الجواب الجزئي قال 'ماكاينش' ولا كان ناقص، قلب فالوثائق وإلا لقيتي المعلومة استعملها.\n"
+            "3. قول 'هاد المعلومة ماكاينةش فالوثائق المتاحة' غير إلا ماكانت حتى معلومة مرتبطة بالسؤال فالوثائق.\n"
+            "4. حافظ على [Source: ...] كما هي بعد كل معلومة.\n"
+            "5. ماتكررش نفس المعلومة، وماتزيدش عناوين بحال 'الجواب النهائي الشامل'.\n"
+            "6. رتب المعلومة بالترتيب الطبيعي: الوثائق → الخطوات → التكلفة → المدة.\n\n"
             f"السؤال الأصلي: {question}\n\n"
+            f"الوثائق الرسمية:\n{retrieved_context}\n\n"
             f"الأجوبة الجزئية:\n{facts_context}\n"
             f"{section_instructions}"
-            "الجواب النهائي الشامل بالدارجة:\n"
+            "الجواب بالدارجة (مباشر، بلا مقدمة):\n"
         )
-    if language in ("arabic_msa", "Arabizi"):
+    if language == "Arabizi":
         return (
-            "أنت مساعد إداري رسمي. مهمتك: اجمع الإجابات الفرعية في إجابة واحدة شاملة ومنظمة.\n\n"
+            "You are an official administrative assistant. Give ONE concise, direct answer to the question, based on the official DOCUMENTS and the partial answers.\n\n"
+            "🔴 Mandatory rules:\n"
+            "1. Answer directly and briefly. No intro, no 'As an assistant' / 'I am pleased to'.\n"
+            "2. Write the final answer ONLY in Moroccan Darija in Arabizi (Latin letters; 3=ع, 7=ح, 9=ق). Even if labels/documents are in Arabic, write everything in Arabizi.\n"
+            "3. Extract whatever answers the question directly from the DOCUMENTS. Even if a partial answer says 'not available' or is incomplete, check the documents yourself and use the info if it is there.\n"
+            "4. Say 'had lma3luma makaynach f lwatha2eq' ONLY if the documents contain nothing relevant to the question.\n"
+            "5. Keep the [Source: ...] tags in place; don't repeat info or add headers like 'final comprehensive answer'.\n"
+            "6. Order naturally: documents → steps → cost → duration.\n\n"
+            f"Original question: {question}\n\n"
+            f"Official documents:\n{retrieved_context}\n\n"
+            f"Partial answers:\n{facts_context}\n"
+            f"{section_instructions}"
+            "Final answer in Arabizi (direct, no intro):\n"
+        )
+    if language == "arabic_msa":
+        return (
+            "أنت مساعد إداري رسمي. مهمتك: قدّم إجابة واحدة مختصرة ومباشرة على السؤال، اعتماداً على الوثائق الرسمية والإجابات الفرعية.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. اكتب الإجابة النهائية بالعربية الفصحى فقط.\n"
-            "2. استخدم فقط المعلومات الموجودة في الإجابات الفرعية — لا تخترع شيئاً.\n"
-            "3. حافظ على [Source: filename.pdf] كما هي في كل مكان.\n"
-            "4. لا تكرر نفس المعلومة في أقسام مختلفة.\n"
-            "5. رتب الأقسام بالترتيب الطبيعي: الوثائق → الإجراءات → التكلفة → المدة.\n\n"
+            "1. أجب مباشرة وباختصار بالعربية الفصحى فقط. بدون مقدمة وبدون 'بصفتي مساعد' أو 'يسرني'.\n"
+            "2. استخرج المعلومة التي تجيب على السؤال من الوثائق الرسمية مباشرة. حتى لو قالت إجابة فرعية 'غير متوفرة' أو كانت ناقصة، ابحث في الوثائق بنفسك واستعمل المعلومة إن وُجدت.\n"
+            "3. قل 'هذه المعلومة غير متوفرة في الوثائق المتاحة' فقط إذا لم تكن هناك أي معلومة ذات صلة بالسؤال في الوثائق.\n"
+            "4. حافظ على [Source: ...] كما هي بعد كل معلومة.\n"
+            "5. لا تكرر نفس المعلومة، ولا تضف عناوين مثل 'الإجابة النهائية الشاملة'.\n"
+            "6. رتب المعلومة بالترتيب الطبيعي: الوثائق → الإجراءات → التكلفة → المدة.\n\n"
             f"السؤال الأصلي: {question}\n\n"
+            f"الوثائق الرسمية:\n{retrieved_context}\n\n"
             f"الإجابات الفرعية:\n{facts_context}\n"
             f"{section_instructions}"
-            "الإجابة النهائية الشاملة:\n"
+            "الإجابة (مباشرة، بلا مقدمة):\n"
         )
     return (
-        "Vous êtes un assistant administratif officiel. Votre mission: assembler les réponses partielles en une réponse complète et structurée.\n\n"
+        "Vous êtes un assistant administratif officiel. Donnez UNE réponse concise et directe à la question, en vous basant sur les DOCUMENTS officiels et les réponses partielles.\n\n"
         "🔴 Règles impératives:\n"
-        "1. Rédigez la réponse finale UNIQUEMENT en français.\n"
-        "2. Utilisez UNIQUEMENT les informations présentes dans les réponses partielles — n'inventez rien.\n"
-        "3. Conservez exactement les balises [Source: filename.pdf] à leur place.\n"
-        "4. Ne répétez pas la même information dans des sections différentes.\n"
-        "5. Organisez dans l'ordre naturel: documents → étapes → coût → délai.\n\n"
+        "1. Répondez directement et brièvement, UNIQUEMENT en français. Pas d'introduction, pas de 'En tant qu'assistant'.\n"
+        "2. Extrayez des DOCUMENTS l'information qui répond à la question. Même si une réponse partielle dit 'non disponible' ou est incomplète, vérifiez vous-même les documents et utilisez l'information si elle s'y trouve.\n"
+        "3. N'indiquez 'Cette information n'est pas disponible dans les documents fournis' QUE si les documents ne contiennent rien de pertinent pour la question.\n"
+        "4. Conservez les balises [Source: ...] à leur place.\n"
+        "5. Ne répétez pas l'information et n'ajoutez pas de titres comme 'Réponse finale complète'.\n"
+        "6. Organisez dans l'ordre naturel: documents → étapes → coût → délai.\n\n"
         f"Question originale: {question}\n\n"
+        f"Documents officiels:\n{retrieved_context}\n\n"
         f"Réponses partielles:\n{facts_context}\n"
         f"{section_instructions}"
-        "Réponse finale complète:\n"
+        "Réponse (directe, sans introduction):\n"
     )
 
 
@@ -202,6 +235,16 @@ def intermediate_generation_prompt(
 
     lang_key = language if language in intent_instr else "french"
     instr = intent_instr[lang_key].get(intent, "أجب على السؤال بإيجاز." if lang_key in ("arabic_msa", "Darija") else "Répondez brièvement.")
+
+    # Anti-refusal: a hop must extract any relevant content, not refuse just
+    # because its narrow intent label isn't literally present in the chunk.
+    _anti_refusal = {
+        "arabic_msa": " إذا لم تجد المطلوب بالضبط لكن توجد معلومة ذات صلة بالسؤال في الوثيقة، قدّمها؛ لا تقل 'غير متوفر' إلا إذا لم تكن للوثيقة أي علاقة بالسؤال.",
+        "Darija": " إلا ماكانش لي طلبتي بالضبط ولكن كاينة معلومة مرتبطة بالسؤال فالوثيقة، عطيها؛ ماتقولش 'ماكاينش' غير إلا الوثيقة ماعندها حتى علاقة بالسؤال.",
+        "Arabizi": " If the exact item isn't present but related info is in the document, provide it; only say 'not available' if the document is unrelated to the question.",
+        "french": " Si l'élément exact est absent mais qu'une information liée existe dans le document, donnez-la; n'indiquez 'non disponible' que si le document n'a aucun rapport avec la question.",
+    }
+    instr = instr + _anti_refusal.get(lang_key, _anti_refusal["french"])
 
     if language == "Darija":
         return (

@@ -21,6 +21,7 @@ from pipeline.models import (
     QuestionFlags,
     RetrievalResult,
     ScoredChunk,
+    short_source,
 )
 
 log = logging.getLogger("MoroccanRAG")
@@ -161,10 +162,31 @@ class HybridRetriever:
         )
 
     def is_out_of_scope(self, retrieval: RetrievalResult) -> bool:
-        """Return True if top retrieval score is below the out-of-scope threshold."""
+        """
+        Return True when retrieval found nothing that actually answers the query.
+
+        Prefer the CrossEncoder reranker score — a far better absolute-relevance
+        signal than the RRF rank. Topically-related-but-unanswerable questions
+        (e.g. asking for a procedure absent from the corpus) get a low reranker
+        score even when their RRF rank looks acceptable, so the RRF-only check
+        let them through. Fall back to RRF when the reranker is disabled.
+        """
         if not retrieval.rrf_scores:
             return True
-        return retrieval.rrf_scores[0] < settings.outscope_score_threshold
+        # RRF safety net — genuinely empty / garbage retrieval.
+        if retrieval.rrf_scores[0] < settings.outscope_score_threshold:
+            return True
+        # Reranker check. NOTE (validated empirically): the CrossEncoder score does
+        # NOT cleanly separate "answer-absent-from-corpus" questions — they are
+        # phrased like in-scope ones and match a similar but wrong procedure with
+        # high confidence (OUTSCOPE scores ranged 0.02–0.99, overlapping answerable
+        # questions). Kept off by default (threshold 0.0 ⇒ never fires for the
+        # model's [0,1] scores) so it cannot falsely abstain answerable questions;
+        # the threshold is left tunable for future calibration.
+        if getattr(retrieval, "reranker_applied", False) and retrieval.reranker_scores:
+            if retrieval.reranker_scores[0] < settings.outscope_reranker_threshold:
+                return True
+        return False
 
 
 # ── Search helpers ────────────────────────────────────────────────────────────
@@ -257,7 +279,7 @@ def _build_reranker_pairs(query: str, candidates: List[ScoredChunk], flags: Ques
 
 
 def _build_context(chunks: List[ScoredChunk]) -> str:
-    parts = [f"[Source: {sc.chunk.source} | Page: {sc.chunk.page}]\n{sc.chunk.text}" for sc in chunks]
+    parts = [f"[Source: {short_source(sc.chunk.source)} | Page: {sc.chunk.page}]\n{sc.chunk.text}" for sc in chunks]
     return "\n\n".join(parts)
 
 

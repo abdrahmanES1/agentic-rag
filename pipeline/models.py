@@ -10,8 +10,24 @@ Key additions vs the original monolith:
     just the initial retrieval.
 """
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
+
+
+def short_source(source: str) -> str:
+    """
+    Compact a chunk source for citation display. Scraped sources are full URLs
+    (e.g. https://idarati.ma/informationnel/ar/thematique/<uuid>/<uuid>) whose
+    long UUID/path fragments bloat answers and pollute lexical/number metrics.
+    Return just the domain (a substring of the full URL, so existing citation
+    validation still matches). Non-URL sources (filenames) are returned as-is.
+    """
+    s = (source or "").strip()
+    if s.lower().startswith("http"):
+        s = re.sub(r"^https?://", "", s).rstrip("/")
+        return s.split("/", 1)[0] or s
+    return s
 
 
 # ── Knowledge Base primitives ─────────────────────────────────────────────────
@@ -336,7 +352,7 @@ class ClaimVerification:
 @dataclass
 class EntityVerification:
     entity: str
-    entity_type: str  # "DATE" | "AMOUNT" | "LOCATION"
+    entity_type: str  # "DATE" | "AMOUNT" | "LOCATION" | "DURATION" | "LEGAL_REF"
     found_in_context: bool
     exact_match: bool
     source_chunk: Optional[Chunk] = None

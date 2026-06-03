@@ -29,6 +29,7 @@ from pipeline.models import (
     GroundingAudit,
     QuestionFlags,
     ScoredChunk,
+    short_source,
 )
 
 log = logging.getLogger("MoroccanRAG")
@@ -36,6 +37,27 @@ log = logging.getLogger("MoroccanRAG")
 _MAX_CLAIM_CHARS = 600
 _NLI_MAX_CHUNKS = 5
 _JUDGE_MAX_CHUNKS = 3
+
+
+def _resolve_device() -> str:
+    """
+    Resolve the torch device. 'auto' → cuda if available. Even when 'cuda' is
+    requested explicitly, verify CUDA is actually usable — otherwise loading on
+    'cuda' raises and the NLI model silently degrades to word-overlap.
+    """
+    d = settings.device
+    if d in ("auto", "cuda"):
+        try:
+            import torch
+            if torch.cuda.is_available():
+                return "cuda"
+            if d == "cuda":
+                log.warning("DEVICE=cuda but torch reports no CUDA — falling back to CPU. "
+                            "Install a CUDA torch build to use the GPU.")
+            return "cpu"
+        except Exception:
+            return "cpu"
+    return d
 
 DARIJA_STOPWORDS: Set[str] = {
     "واش", "غادي", "كاين", "كاينة", "بزاف", "شوية", "غير",
@@ -65,15 +87,20 @@ class NLIVerifier:
         self._model = None
         self._available = False
 
-    def _load(self, device: str = "cpu") -> bool:
+    def _load(self, device: str = None) -> bool:
         if self._model is not None:
             return self._available
+        if device is None:
+            device = _resolve_device()   # was "cpu" — now honors DEVICE=cuda
         try:
             from sentence_transformers import CrossEncoder
 
             self._model = CrossEncoder(self.MODEL_NAME, device=device, max_length=512)
+            if settings.model_fp16 and device == "cuda":
+                self._model.model.half()
             self._available = True
-            log.info(f"  NLI loaded (mDeBERTa-XNLI AR+FR) on {device}")
+            log.info(f"  NLI loaded (mDeBERTa-XNLI AR+FR) on {device}"
+                     f"{', fp16' if settings.model_fp16 and device == 'cuda' else ''}")
         except Exception as exc:
             log.warning(f"  NLI unavailable: {exc} — word-overlap fallback")
             self._available = False
@@ -92,18 +119,25 @@ class NLIVerifier:
         self._load()
         if self._available and self._model is not None:
             try:
-                context = " ".join(c.text for c in chunks[:_NLI_MAX_CHUNKS])
+                chunk_list = chunks[:_NLI_MAX_CHUNKS]
+                context = " ".join(c.text for c in chunk_list)
                 context_trunc = " ".join(context.split()[:400])
                 claim_trunc = " ".join(claim.split()[:100])
 
-                raw_scores = self._model.predict([(context_trunc, claim_trunc)])[0]
-                entailment = self._softmax_entailment(raw_scores)
+                # Batch ALL pairs (combined context + each chunk) into ONE
+                # forward pass instead of 1 + N sequential calls — big speedup,
+                # especially on GPU.
+                pairs = [(context_trunc, claim_trunc)] + [
+                    (c.text[:400], claim_trunc) for c in chunk_list
+                ]
+                raw_all = self._model.predict(pairs)
+
+                entailment = self._softmax_entailment(raw_all[0])
                 grounded = entailment >= settings.nli_grounding_threshold
 
                 best_chunk, best_score = None, 0.0
-                for chunk in chunks[:_NLI_MAX_CHUNKS]:
-                    cs = self._model.predict([(chunk.text[:400], claim_trunc)])[0]
-                    ce = self._softmax_entailment(cs)
+                for chunk, raw in zip(chunk_list, raw_all[1:]):
+                    ce = self._softmax_entailment(raw)
                     if ce > best_score:
                         best_score, best_chunk = ce, chunk
 
@@ -165,7 +199,51 @@ def extract_entities(text: str) -> List[EntityVerification]:
                 EntityVerification(entity=city, entity_type="LOCATION",
                                    found_in_context=False, exact_match=False)
             )
+
+    # ── DURATION (deadlines / délais — critical for administrative procedures) ──
+    _dur_ar = (r"(?:يوم(?:ًا|اً|ا)?|أيام|أسبوع(?:ًا|اً)?|أسابيع|"
+               r"شهر(?:ًا|اً|ا)?|أشهر|سنة|سنوات|سنوية|عام(?:ًا|اً)?|أعوام|ساعة|ساعات)")
+    _dur_lat = r"(?:jours?|semaines?|mois|ans?|années?|heures?|days?|weeks?|months?|years?|hours?)"
+    for pattern in [
+        rf"\b(\d+)\s*{_dur_lat}\b",
+        rf"(\d+)\s*{_dur_ar}",
+        rf"([٠-٩]+)\s*{_dur_ar}",
+    ]:
+        for m in re.finditer(pattern, text, re.IGNORECASE):
+            entities.append(
+                EntityVerification(entity=m.group(0).strip(), entity_type="DURATION",
+                                   found_in_context=False, exact_match=False)
+            )
+
+    # ── LEGAL_REF (decree / law / dahir / arrêté numbers) ──────────────────────
+    for pattern in [
+        r"(?:مرسوم|قانون|قرار|ظهير|منشور|دورية)\s*(?:ملكي\s*)?(?:شريف\s*)?(?:رقم\s*)?"
+        r"[\d٠-٩][\d٠-٩./\-]*",
+        r"(?:décret|loi|arrêté|dahir|circulaire)\s*(?:royal\s*)?n\s*[°ºo]?\s*"
+        r"[\d][\d./\-]*",
+    ]:
+        for m in re.finditer(pattern, text, re.IGNORECASE):
+            entities.append(
+                EntityVerification(entity=m.group(0).strip(), entity_type="LEGAL_REF",
+                                   found_in_context=False, exact_match=False)
+            )
     return entities
+
+
+_TASHKEEL_RE = re.compile(r"[ً-ْٰ]")
+_A2W_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+
+
+def _normalize_for_match(s: str) -> str:
+    """
+    Normalize for entity grounding: Arabic-Indic → Western digits, strip Arabic
+    diacritics (tashkeel), collapse whitespace, lowercase. This lets multi-word
+    entities ('30 يوماً' vs '30 يوما', 'décret n° 2.04.564') match across the
+    spacing/diacritic/digit-script variation found between answers and contexts.
+    """
+    s = s.translate(_A2W_DIGITS)
+    s = _TASHKEEL_RE.sub("", s)
+    return re.sub(r"\s+", " ", s).strip().lower()
 
 
 def verify_entities_in_chunks(
@@ -173,25 +251,20 @@ def verify_entities_in_chunks(
 ) -> Tuple[List[EntityVerification], float]:
     if not entities:
         return [], 1.0
-    W2A = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
-    A2W = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
-    context = " ".join(c.text for c in chunks)
+
+    norm_context = _normalize_for_match(" ".join(c.text for c in chunks))
+    norm_chunks = [(c, _normalize_for_match(c.text)) for c in chunks]
 
     for entity in entities:
-        if entity.entity in context:
+        norm_entity = _normalize_for_match(entity.entity)
+        if not norm_entity:
+            continue
+        if norm_entity in norm_context:
             entity.found_in_context = entity.exact_match = True
-            for chunk in chunks:
-                if entity.entity in chunk.text:
+            for chunk, nch in norm_chunks:
+                if norm_entity in nch:
                     entity.source_chunk = chunk
                     break
-        elif entity.entity_type in ("DATE", "AMOUNT"):
-            alt = entity.entity.translate(W2A)
-            if alt in context:
-                entity.found_in_context = entity.exact_match = True
-            else:
-                alt = entity.entity.translate(A2W)
-                if alt in context:
-                    entity.found_in_context = entity.exact_match = True
 
     matched = sum(1 for e in entities if e.exact_match)
     return entities, matched / len(entities)
@@ -199,10 +272,37 @@ def verify_entities_in_chunks(
 
 # ── Claim decomposition ───────────────────────────────────────────────────────
 
+_CITATION_RE = re.compile(r"\[Source:[^\]]*\]", re.IGNORECASE)
+_URL_RE = re.compile(r"https?://\S+")
+
+
+def _strip_citations(text: str) -> str:
+    """Remove [Source:…] tags and bare URLs so they don't become 'claims'."""
+    text = _CITATION_RE.sub("", text)
+    text = _URL_RE.sub("", text)
+    return text
+
+
+def _is_noise_claim(claim: str) -> bool:
+    """True for non-claims: citations, URLs, JSON artifacts, or 'source is …' lines."""
+    c = claim.strip().strip('",[]{}').strip()
+    if len(c) <= 10:
+        return True
+    if _URL_RE.search(c) or "idarati.ma" in c.lower():
+        return True
+    if c.startswith(("{", "[", '"claims"', '"ادعاءات"', "claims", "ادعاءات", "réponse", "json")):
+        return True
+    # "the source is …" / "المصدر …" / "الرابط …" style meta-claims
+    low = c.lower()
+    if any(k in low for k in ("the source", "source for", "reference link", "le source")) \
+       or c.startswith(("المصدر", "الرابط", "المرجع")):
+        return True
+    return False
+
 
 def decompose_into_claims(answer: str, language: str, ollama) -> List[str]:
     """Break answer into max 5 atomic verifiable claims via LLM (JSON output)."""
-    answer_trunc = answer[:_MAX_CLAIM_CHARS]
+    answer_trunc = _strip_citations(answer)[:_MAX_CLAIM_CHARS]
 
     if language in ("arabic_msa", "Darija"):
         system = (
@@ -247,24 +347,33 @@ def decompose_into_claims(answer: str, language: str, ollama) -> List[str]:
     )
     if not response:
         sep = r"[.؟!]" if language in ("arabic_msa", "Darija") else r"[.?!]"
-        return [s.strip() for s in re.split(sep, answer) if len(s.strip()) > 10][:5]
+        cands = [s.strip() for s in re.split(sep, answer_trunc)]
+        return [c for c in cands if not _is_noise_claim(c)][:5]
+
+    # Strip any stray thinking / code fences before JSON parsing.
+    response = re.sub(r"<think(?:ing)?>.*?</think(?:ing)?>", "", response, flags=re.DOTALL)
+    response = re.sub(r"```(?:json)?", "", response)
 
     try:
         parsed = (
             json.loads(response)
-            if response.startswith("{")
+            if response.lstrip().startswith("{")
             else json.loads(re.search(r"\{.*\}", response, re.DOTALL).group(0))
         )
-        claims = [c.strip() for c in parsed.get("claims", []) if len(c.strip()) > 10]
+        # Model may use a localized key ("ادعاءات") instead of "claims".
+        raw_claims = (parsed.get("claims") or parsed.get("ادعاءات")
+                      or parsed.get("réponses") or [])
+        claims = [c.strip() for c in raw_claims
+                  if isinstance(c, str) and not _is_noise_claim(c)]
         return claims[:5]
     except Exception as exc:
         log.debug("Claim decompose JSON parse failed, using line split: %s", exc)
-        claims = [
+        cands = [
             re.sub(r"^[\d\.\)\-•*]+\s*", "", line.strip())
             for line in response.split("\n")
             if line.strip()
         ]
-        return [c for c in claims if len(c) > 10][:5]
+        return [c for c in cands if not _is_noise_claim(c)][:5]
 
 
 def verify_claim_llm_judge(
@@ -438,7 +547,7 @@ def _inject_citations(answer: str, chunks: List[Chunk], language: str) -> Tuple[
         return answer, 0
     source_map: Dict[str, List[Chunk]] = defaultdict(list)
     for chunk in chunks:
-        source_map[chunk.source].append(chunk)
+        source_map[short_source(chunk.source)].append(chunk)
     has_citation = re.compile(r"\[Source:\s*[^\]]+\]")
     is_content_line = re.compile(r"^\s*([-•*]\s+|\d+\.\s+)")
     lines, new_lines, injected = answer.split("\n"), [], 0
@@ -631,13 +740,46 @@ def _run_chain_verification(
     return chain_verified
 
 
-def _compute_cfi(entity_match_ratio: float, chain_verified: bool) -> float:
-    """Layers 8+10: compute Composite Fidelity Index."""
+def _compute_cfi(
+    claim_grounded_ratio: float,
+    entity_match_ratio: float,
+    num_entities: int,
+    chain_verified: bool,
+) -> float:
+    """
+    Layers 8+10: Composite Fidelity Index — a single faithfulness scalar in [0,1].
+
+    Combines three fidelity signals:
+      • claim grounding  (entailment-based faithfulness — the PRIMARY signal)
+      • entity fidelity  (numbers/dates/amounts found verbatim in context)
+      • relational consistency (multi-hop chain agreement)
+
+    The earlier version derived CFI purely from ``entity_match_ratio``, which
+    DEFAULTS to 1.0 when an answer has no extractable entities — making CFI
+    vacuously high even for completely ungrounded answers (the CFI=0.89 vs
+    claim_ratio=0.15 contradiction). CFI is now anchored on claim grounding,
+    and the entity term is renormalized away when no entities exist instead of
+    contributing a free 1.0.
+    """
     relation_score = 1.0 if chain_verified else 0.5
-    return (
-        settings.cfi_weight_entity * entity_match_ratio
-        + settings.cfi_weight_relation * relation_score
-    )
+    w_claim = settings.cfi_weight_claim
+    w_entity = settings.cfi_weight_entity
+    w_relation = settings.cfi_weight_relation
+
+    if num_entities > 0:
+        total = w_claim + w_entity + w_relation
+        cfi = (
+            w_claim * claim_grounded_ratio
+            + w_entity * entity_match_ratio
+            + w_relation * relation_score
+        ) / total
+    else:
+        # No extractable entities → the entity term is undefined (not a free
+        # 1.0). Renormalize over the claim + relation components only.
+        total = w_claim + w_relation
+        cfi = (w_claim * claim_grounded_ratio + w_relation * relation_score) / total
+
+    return round(cfi, 4)
 
 
 def _inject_and_validate_citations(
@@ -686,12 +828,14 @@ def verify_output(
     # Layer 6: multi-hop chain verification
     chain_verified = _run_chain_verification(intermediate_answers or [], all_chunks, flags, ollama)
 
-    # Layers 8+10: confidence + CFI
-    cfi = _compute_cfi(entity_match_ratio, chain_verified)
-
-    # Overall grounding decision
+    # Claim grounding ratio (primary faithfulness signal) — needed for CFI.
     grounded_claims_n = sum(1 for cv in claim_verifications if cv.grounded)
     claim_grounded_ratio = grounded_claims_n / max(len(claim_verifications), 1)
+
+    # Layers 8+10: Composite Fidelity Index (anchored on claim grounding).
+    cfi = _compute_cfi(claim_grounded_ratio, entity_match_ratio, len(entities), chain_verified)
+
+    # Overall grounding decision
     entity_ok = (
         entity_match_ratio >= 1.0 if settings.entity_exact_match
         else entity_match_ratio >= 0.80

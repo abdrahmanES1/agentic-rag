@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     )
     # "auto" → use CUDA if available, else CPU. Override with "cpu" or "cuda".
     device: str = Field(default="auto")
+    # Load the embedding/reranker/NLI models in fp16 on CUDA (~halves their VRAM,
+    # ~6 GB → ~3 GB) so a co-resident local LLM (Ollama) gets more GPU. fp16
+    # inference is numerically negligible for ranking/NLI. Ignored on CPU.
+    model_fp16: bool = Field(default=False)
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     chunk_size: int = Field(default=400)
@@ -63,6 +67,10 @@ class Settings(BaseSettings):
     bm25_weight: float = Field(default=0.4)
     dense_weight: float = Field(default=0.6)
     outscope_score_threshold: float = Field(default=0.002)
+    # CrossEncoder reranker score below which retrieval is treated as out-of-scope
+    # (no chunk actually answers the query). Better signal than the RRF rank for
+    # topically-related-but-unanswerable questions. Calibrate against the abstain set.
+    outscope_reranker_threshold: float = Field(default=0.0)
     dense_min_score_unified: float = Field(default=0.20)
     dense_min_score_per_lang: float = Field(default=0.25)
 
@@ -79,8 +87,13 @@ class Settings(BaseSettings):
     claim_grounded_ratio: float = Field(default=0.80)
     entity_exact_match: bool = Field(default=True)
     ambiguous_nli_threshold: float = Field(default=0.65)
-    cfi_weight_entity: float = Field(default=0.60)
-    cfi_weight_relation: float = Field(default=0.40)
+    # Composite Fidelity Index weights (must sum to 1.0). Claim grounding is the
+    # primary faithfulness signal; entity + relation are structural modulators.
+    # The entity term is renormalized away when an answer has no extractable
+    # entities, so CFI no longer defaults vacuously to ~1.0.
+    cfi_weight_claim: float = Field(default=0.50)
+    cfi_weight_entity: float = Field(default=0.30)
+    cfi_weight_relation: float = Field(default=0.20)
 
     # ── Agent & Memory ────────────────────────────────────────────────────────
     max_agent_steps: int = Field(default=4)

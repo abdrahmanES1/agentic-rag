@@ -28,8 +28,15 @@ REQUEST_TIMEOUT = 300
 
 class OllamaClient:
     """
-    Thin OpenAI-SDK wrapper for Ollama.
-    Shared by all baselines so configuration is centralized.
+    Thin wrapper for Ollama, shared by all baselines.
+
+    For a LOCAL Ollama it talks to the NATIVE ``/api/chat`` endpoint so that
+    ``think:false`` is actually honored. The OpenAI-compatible ``/v1`` endpoint
+    IGNORES ``think``, so gemma4:e4b reasons inline and any small-``max_tokens``
+    call (e.g. FLARE's per-sentence ``max_tokens=200``) exhausts its budget on
+    reasoning and returns EMPTY content (finish_reason=length) — which is why
+    FLARE produced ``[ERROR: no answer generated]`` on every question. Remote /
+    non-localhost endpoints fall back to the OpenAI SDK path.
     """
 
     def __init__(
@@ -38,8 +45,57 @@ class OllamaClient:
         model: str = OLLAMA_MODEL,
         api_key: str = "ollama",
     ):
+        self._base_url = base_url
         self._client = OpenAI(base_url=base_url, api_key=api_key, timeout=REQUEST_TIMEOUT)
         self.model = model
+
+        host = base_url.split("//", 1)[-1].split("/", 1)[0]
+        self._use_native = any(h in host for h in ("localhost", "127.0.0.1", "0.0.0.0"))
+        native = base_url.rstrip("/")
+        if native.endswith("/v1"):
+            native = native[:-3]
+        self._native_url = native.rstrip("/") + "/api/chat"
+
+    def _call_native(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float,
+        max_tokens: int,
+        fmt: Any = None,
+        repeat_penalty: float = 1.0,
+    ) -> str:
+        """POST to Ollama's native /api/chat with think:false (clean content)."""
+        options: Dict[str, Any] = {
+            "num_ctx": 8192,
+            "temperature": temperature,
+            "num_predict": max_tokens,
+        }
+        if repeat_penalty and repeat_penalty != 1.0:
+            options["repeat_penalty"] = repeat_penalty
+        body: Dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "think": False,
+            "options": options,
+        }
+        # Native `format` wants "json" OR a *raw* JSON schema — not the OpenAI
+        # wrapper {"type":"json_schema","json_schema":{...}}.
+        if fmt == "json":
+            body["format"] = "json"
+        elif isinstance(fmt, dict):
+            if fmt.get("type") == "json_schema":
+                schema = (fmt.get("json_schema") or {}).get("schema")
+                if schema:
+                    body["format"] = schema
+            elif fmt.get("type") == "json_object":
+                body["format"] = "json"
+            else:
+                body["format"] = fmt
+        resp = requests.post(self._native_url, json=body, timeout=REQUEST_TIMEOUT)
+        resp.raise_for_status()
+        msg = resp.json().get("message", {}) or {}
+        return (msg.get("content") or "").strip()
 
     def generate(
         self,
@@ -55,6 +111,10 @@ class OllamaClient:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
         try:
+            if self._use_native:
+                return self._call_native(
+                    messages, temperature, max_tokens, repeat_penalty=repetition_penalty
+                )
             resp = self._client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -89,6 +149,8 @@ class OllamaClient:
     ) -> str:
         """Full messages list for structured-output calls."""
         try:
+            if self._use_native:
+                return self._call_native(messages, temperature, max_tokens, fmt=fmt)
             kwargs: Dict[str, Any] = dict(
                 model=self.model,
                 messages=messages,

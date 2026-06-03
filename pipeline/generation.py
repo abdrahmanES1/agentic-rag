@@ -33,6 +33,7 @@ from pipeline.models import (
     ScoredChunk,
     ToolCall,
     VALID_INTENTS,
+    short_source,
 )
 from pipeline.retrieval import HybridRetriever
 
@@ -146,10 +147,20 @@ class OllamaClient:
             "options": options,
             "keep_alive": extra.get("keep_alive", settings.ollama_keep_alive),
         }
+        # Structured output: Ollama's native `format` wants "json" OR a *raw* JSON
+        # schema — NOT the OpenAI wrapper {"type":"json_schema","json_schema":{...}}.
+        # Translate so claims/planner/judge get schema-enforced output (correct keys).
         if fmt == "json":
             body["format"] = "json"
-        elif fmt is not None and not isinstance(fmt, str):
-            body["format"] = fmt                  # JSON-schema dict
+        elif isinstance(fmt, dict):
+            if fmt.get("type") == "json_schema":
+                schema = (fmt.get("json_schema") or {}).get("schema")
+                if schema:
+                    body["format"] = schema
+            elif fmt.get("type") == "json_object":
+                body["format"] = "json"
+            else:
+                body["format"] = fmt   # already a raw schema
 
         resp = requests.post(self._native_url, json=body, timeout=settings.api_timeout)
         resp.raise_for_status()
@@ -377,7 +388,7 @@ class AgentMemory:
 
     def build_context(self, max_chunks: int = None) -> str:
         top = self.get_top_chunks(max_chunks or settings.compress_top_n)
-        parts = [f"[Source: {c.source} | Page: {c.page}]\n{c.text}" for c in top]
+        parts = [f"[Source: {short_source(c.source)} | Page: {c.page}]\n{c.text}" for c in top]
         return "\n\n".join(parts)
 
     def size(self) -> int:
@@ -805,6 +816,7 @@ class PlannerAgent:
                 raise ValueError("Empty plan response")
 
             steps = self._parse_plan_json(raw, question)
+            steps = self._ensure_intent_coverage(steps, question, flags)
             state.log(f"PLAN (LLM): {len(steps)} steps")
             return AgentPlan(steps=steps, raw_plan_text=raw, plan_source="llm")
 
@@ -812,6 +824,40 @@ class PlannerAgent:
             log.warning(f"  [Planner] LLM plan failed: {exc} — fallback to intent decomposition")
             state.log(f"PLAN (fallback): {exc}")
             return self._fallback_plan(question, flags)
+
+    def _ensure_intent_coverage(
+        self, steps: List[PlannedStep], question: str, flags: QuestionFlags
+    ) -> List[PlannedStep]:
+        """
+        Guarantee the plan covers every detected intent. The LLM planner often
+        drops intents (e.g. a DOCUMENTS+PROCEDURE question becomes a single
+        PROCEDURE step), which then makes synthesis answer only that narrow
+        slice. Inject a retrieval step for any missing intent.
+        """
+        if not flags.intents:
+            return steps
+        covered = {s.intent for s in steps}
+        missing = [
+            i for i in flags.intents
+            if i in VALID_INTENTS and i != "OUT_OF_SCOPE" and i not in covered
+        ]
+        if not missing:
+            return steps
+        sub_qs = self._decompose_by_intents(question, missing, flags.language)
+        next_id = max((s.step_id for s in steps), default=0) + 1
+        for sub_q, intent in zip(sub_qs, missing):
+            if len(steps) >= settings.max_agent_steps:
+                break
+            steps.append(PlannedStep(
+                step_id=next_id,
+                intent=intent,
+                sub_question=sub_q,
+                tool=ToolRegistry.best_tool_for(intent),
+                tool_args={"query": sub_q},
+                rationale=f"Added for intent coverage: {intent}",
+            ))
+            next_id += 1
+        return steps
 
     def _fallback_plan(self, question: str, flags: QuestionFlags) -> AgentPlan:
         intents = flags.intents if flags.intents else ["DOCUMENTS"]
@@ -939,14 +985,17 @@ class PlannerAgent:
             if intent in intent_sections
         )
 
-        prompt = synthesis_prompt(question, facts_context, section_instructions, language)
+        # Pass the full retrieved evidence so synthesis can extract the answer
+        # even when an individual hop's partial answer came back empty/refused.
+        retrieved_context = self.memory.build_context()
+        prompt = synthesis_prompt(question, facts_context, section_instructions, language, retrieved_context)
         try:
             answer = self.ollama.generate(
                 [{"role": "user", "content": prompt}],
                 temperature=settings.temperature,
                 max_tokens=settings.max_new_tokens,
                 seed=42,
-                think=True,   # final answer reasons (native endpoint keeps content clean)
+                think=True,   # final answer reasons; native /api/chat keeps content clean
             )
             log.debug(f"  [Synthesise] {len(answer or '')} chars")
             if not answer or len(answer.strip()) < 20:
@@ -973,7 +1022,7 @@ class PlannerAgent:
                 temperature=settings.temperature,
                 max_tokens=settings.max_new_tokens,
                 seed=42,
-                think=True,   # final answer reasons (native endpoint keeps content clean)
+                think=True,   # final answer reasons; native /api/chat keeps content clean
             )
             log.debug(f"  [DirectGen] {len(answer or '')} chars")
             return answer.strip() if answer else self._get_fallback(flags.language)
@@ -996,7 +1045,7 @@ class PlannerAgent:
 
         from pipeline.prompts import intermediate_generation_prompt
         chunk_context = "\n\n".join(
-            f"[Source: {c.source} | Page: {c.page}]\n{c.text[:400]}" for c in chunks[:3]
+            f"[Source: {short_source(c.source)} | Page: {c.page}]\n{c.text[:400]}" for c in chunks[:3]
         )
         prior_context = ""
         if prior:

@@ -81,13 +81,19 @@ class MoroccanRAGPipeline:
         log.info("  Initializing MoroccanRAGPipeline...")
         device = _resolve_device()
 
+        _fp16 = settings.model_fp16 and device == "cuda"
+
         self.embedding_model = SentenceTransformer(settings.embedding_model, device=device)
-        log.info(f"  Embedding model loaded: {settings.embedding_model} ({device})")
+        if _fp16:
+            self.embedding_model.half()
+        log.info(f"  Embedding model loaded: {settings.embedding_model} ({device}{', fp16' if _fp16 else ''})")
 
         if settings.enable_reranker:
             try:
                 self.reranker = CrossEncoder(settings.reranker_model, device=device, max_length=512)
-                log.info(f"  Reranker loaded: {settings.reranker_model} ({device})")
+                if _fp16:
+                    self.reranker.model.half()
+                log.info(f"  Reranker loaded: {settings.reranker_model} ({device}{', fp16' if _fp16 else ''})")
             except Exception as exc:
                 log.warning(f"  Reranker not loaded: {exc}")
                 self.reranker = None
