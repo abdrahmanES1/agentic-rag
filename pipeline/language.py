@@ -10,6 +10,7 @@ Step 4 & 5 — Language detection and query translation.
   Signal 5 — ML detectors (Lingua, langdetect, langid)
 """
 
+import json
 import logging
 import re
 from collections import defaultdict
@@ -183,6 +184,109 @@ def detect_language(question: str) -> Tuple[str, float]:
     return final_lang, confidence
 
 
+# ── Agentic LLM detect + translate ────────────────────────────────────────────
+
+_LLM_INTENTS = ["DOCUMENTS", "PROCEDURE", "COST", "DEADLINE", "ELIGIBILITY", "LEGAL", "COMPARISON"]
+_LANG_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "language": {"type": "string", "enum": ["Darija", "Arabizi", "arabic_msa", "french"]},
+        "msa": {"type": "string"},
+        "intents": {"type": "array", "items": {"type": "string", "enum": _LLM_INTENTS}},
+    },
+    "required": ["language", "msa", "intents"],
+}
+_LANG_SYS = (
+    "You analyze Moroccan public-service questions. Return JSON with three fields:\n"
+    "1. \"language\" — EXACTLY one of:\n"
+    "   - \"Darija\": Moroccan colloquial Arabic in ARABIC script (شنو، واش، بغيت، خاصني، اللي، ديال، فين، شحال)\n"
+    "   - \"Arabizi\": Moroccan colloquial Arabic ROMANIZED in Latin letters, often with digits "
+    "3=ع 7=ح 9=ق 2=ء (achno, khassni, bach, 3lach, nna9l, ada2, dyal). Latin letters with Arabic words/digits "
+    "= Arabizi, NOT french.\n"
+    "   - \"arabic_msa\": Modern Standard (formal) Arabic in Arabic script\n"
+    "   - \"french\": standard French\n"
+    "2. \"msa\" — a Modern Standard Arabic translation if Darija/Arabizi, otherwise the question verbatim\n"
+    "3. \"intents\" — ALL that the question asks about: DOCUMENTS (papers/وثائق/أوراق needed), "
+    "PROCEDURE (steps), COST (fees/price), DEADLINE (duration/time), ELIGIBILITY (who qualifies), "
+    "LEGAL (penalties), COMPARISON\n"
+    "Output JSON only."
+)
+
+_ARABIZI_DIGIT_RE = re.compile(r"[a-zA-Z][2379]|[2379][a-zA-Z]")
+
+
+def _has_arabizi_digits(text: str) -> bool:
+    """Latin word with an Arabizi digit-letter (3=ع,7=ح,9=ق,2=ء) — French never does this."""
+    return bool(_ARABIZI_DIGIT_RE.search(text))
+
+
+def _is_latin_script(text: str) -> bool:
+    ar = sum(1 for c in text if "؀" <= c <= "ۿ")
+    lat = sum(1 for c in text if c.isascii() and c.isalpha())
+    return lat > ar
+
+
+def _llm_detect_translate(question: str, ollama) -> Tuple[Optional[str], str, list]:
+    """One LLM call → language label + MSA translation + intents."""
+    try:
+        resp = ollama.generate(
+            [{"role": "system", "content": _LANG_SYS}, {"role": "user", "content": question}],
+            temperature=0.0, max_tokens=450, fmt=_LANG_SCHEMA, think=False,
+        )
+        if not resp:
+            return None, "", []
+        resp = re.sub(r"```(?:json)?", "", resp)
+        m = re.search(r"\{.*\}", resp, re.DOTALL)
+        if not m:
+            return None, "", []
+        d = json.loads(m.group(0))
+        lang = d.get("language")
+        intents = [i for i in (d.get("intents") or []) if i in _LLM_INTENTS]
+        return ((lang if lang in ("Darija", "Arabizi", "arabic_msa", "french") else None),
+                (d.get("msa") or ""), intents)
+    except Exception as exc:
+        log.debug("LLM language detect failed: %s", exc)
+        return None, "", []
+
+
+def detect_and_translate(question: str, ollama=None) -> Tuple[str, float, Optional[str], Optional[list]]:
+    """
+    Agentic language understanding in ONE step:
+    returns (language, confidence, msa_query_or_None, llm_intents_or_None).
+
+    LLM-first — gemma reliably tells Arabizi from French (which the ar/fr-only
+    ensemble structurally cannot) and identifies intents directly (no brittle
+    keyword lists) — with a deterministic Arabizi digit-override and a
+    keyword/ensemble fallback when the LLM is unavailable.
+    """
+    text = (question or "").strip()
+    if not text:
+        return "unknown", 0.0, None, None
+
+    # Fast-path: strong Darija markers (Arabic script) — skip the detection LLM
+    # call; intents fall back to keyword classification on the translation.
+    if settings.enable_darija:
+        dc = sum(1 for m in DARIJA_MARKERS if m in text)
+        if dc >= settings.darija_marker_min:
+            conf = min(0.85 + (dc - settings.darija_marker_min) * 0.03, 0.95)
+            return "Darija", conf, (translate_to_msa(question, "Darija", ollama) if ollama else None), None
+
+    # Agentic: LLM detect + translate + intents (one call).
+    if ollama is not None:
+        lang, msa, intents = _llm_detect_translate(question, ollama)
+        if lang:
+            # gemma labels romanized-with-digits as Darija/french → force Arabizi.
+            if lang in ("Darija", "french") and _is_latin_script(text) and _has_arabizi_digits(text):
+                lang = "Arabizi"
+            msa_out = msa.strip() if (lang in ("Darija", "Arabizi") and msa and msa.strip()) else None
+            return lang, 0.85, msa_out, (intents or None)
+
+    # Fallback: keyword/ensemble detector + separate translation.
+    lang, conf = detect_language(question)
+    msa_out = translate_to_msa(question, lang, ollama) if (lang in ("Darija", "Arabizi") and ollama) else None
+    return lang, conf, msa_out, None
+
+
 def translate_to_msa(query: str, source_lang: str, ollama) -> Optional[str]:
     """Translate Darija or Arabizi query to MSA for retrieval."""
     if not settings.enable_query_translation:
@@ -226,12 +330,14 @@ def check_legal_keywords(question: str) -> bool:
     )
 
 
-def classify_question(question: str, language: str, confidence: float, ollama=None):
+def classify_question(question: str, language: str, confidence: float, ollama=None,
+                      llm_intents=None):
     """
     Classify question into QuestionFlags (SIMPLE/MULTIHOP/LEGAL/OUTSCOPE + intents).
 
-    Called after language detection. ollama is accepted but not used — reserved for
-    future LLM-based intent classification.
+    Called after language detection. `llm_intents`, when provided by the agentic
+    detect+translate step, replaces the brittle keyword INTENT_RULES (those miss
+    dialect words like أوراق/lwaraq); the keyword rules remain as a fallback.
     """
     from pipeline.models import QuestionFlags
 
@@ -241,20 +347,22 @@ def classify_question(question: str, language: str, confidence: float, ollama=No
     is_legal = check_legal_keywords(question)
     is_multihop, _conf, _signals, hop_count = detect_multihop(question)
 
-    # Intent detection via keyword matching
-    INTENT_RULES = [
-        ("PROCEDURE", ["إجراء", "خطوات", "طريقة", "كيفية", "procédure", "étapes", "comment faire", "démarche"]),
-        ("COST",      ["رسوم", "تكلفة", "سعر", "ثمن", "درهم", "frais", "coût", "prix", "tarif", "dirhams"]),
-        ("DEADLINE",  ["مدة", "أجل", "وقت", "متى", "délai", "durée", "jours", "semaines", "date limite"]),
-        ("ELIGIBILITY", ["شروط", "أهلية", "يحق", "من يستفيد", "conditions", "éligibilité", "qui peut", "bénéficier"]),
-        ("LEGAL",     LEGAL_KEYWORDS_AR + LEGAL_KEYWORDS_FR),
-        ("DOCUMENTS", ["وثيقة", "وثائق", "ملف", "مستند", "document", "pièce", "dossier", "formulaire"]),
-    ]
-
-    intents = []
-    for intent, keywords in INTENT_RULES:
-        if any(kw in question or kw in q_lower for kw in keywords):
-            intents.append(intent)
+    if llm_intents:
+        intents = [i for i in llm_intents if i in _LLM_INTENTS]
+    else:
+        # Fallback: intent detection via keyword matching
+        INTENT_RULES = [
+            ("PROCEDURE", ["إجراء", "خطوات", "طريقة", "كيفية", "procédure", "étapes", "comment faire", "démarche"]),
+            ("COST",      ["رسوم", "تكلفة", "سعر", "ثمن", "درهم", "frais", "coût", "prix", "tarif", "dirhams"]),
+            ("DEADLINE",  ["مدة", "أجل", "وقت", "متى", "délai", "durée", "jours", "semaines", "date limite"]),
+            ("ELIGIBILITY", ["شروط", "أهلية", "يحق", "من يستفيد", "conditions", "éligibilité", "qui peut", "bénéficier"]),
+            ("LEGAL",     LEGAL_KEYWORDS_AR + LEGAL_KEYWORDS_FR),
+            ("DOCUMENTS", ["وثيقة", "وثائق", "أوراق", "ورقة", "ملف", "مستند", "document", "pièce", "dossier", "formulaire"]),
+        ]
+        intents = []
+        for intent, keywords in INTENT_RULES:
+            if any(kw in question or kw in q_lower for kw in keywords):
+                intents.append(intent)
 
     if is_legal and "LEGAL" not in intents:
         intents.append("LEGAL")

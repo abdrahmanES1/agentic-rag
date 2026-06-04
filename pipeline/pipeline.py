@@ -29,7 +29,7 @@ from sentence_transformers import CrossEncoder, SentenceTransformer
 from pipeline.config import settings
 from pipeline.generation import AgentMemory, OllamaClient, PlannerAgent
 from pipeline.knowledge_base import KnowledgeBase
-from pipeline.language import classify_question, detect_language, translate_to_msa
+from pipeline.language import classify_question, detect_and_translate, detect_language, translate_to_msa
 from pipeline.models import PipelineResult, RetrievalResult, ScoredChunk
 from pipeline.retrieval import HybridRetriever
 from pipeline.verification import NLIVerifier, verify_output
@@ -197,22 +197,20 @@ class MoroccanRAGPipeline:
             raise RuntimeError("Call setup() and build_knowledge_base() first.")
         t0 = time.time()
 
-        # ── Step 4: Language detection ────────────────────────────────────────
-        language, confidence = detect_language(question)
+        # ── Steps 4+5: Language + MSA translation + intents (agentic, one call) ─
+        language, confidence, msa_query, llm_intents = detect_and_translate(question, self.ollama)
         log.info(f"  Language: {language} (conf={confidence:.2f})")
 
-        # ── Step 5: Query translation (Darija/Arabizi → MSA) ─────────────────
         retrieval_query = question
         translation_used = False
-        if language in ("Darija", "Arabizi") and settings.enable_query_translation:
-            msa_query = translate_to_msa(question, language, self.ollama)
-            if msa_query:
-                retrieval_query = msa_query
-                translation_used = True
-                log.info(f"  Query translated: {question[:50]} → {msa_query[:50]}")
+        if language in ("Darija", "Arabizi") and msa_query and settings.enable_query_translation:
+            retrieval_query = msa_query
+            translation_used = True
+            log.info(f"  Query translated: {question[:50]} → {msa_query[:50]}")
 
-        # ── Step 6: Classify question ─────────────────────────────────────────
-        flags = classify_question(retrieval_query, language, confidence, self.ollama)
+        # ── Step 6: Classify question (agentic intents from the same call) ────
+        flags = classify_question(retrieval_query, language, confidence, self.ollama,
+                                  llm_intents=llm_intents)
         log.info(f"  Flags: {flags.summary()}")
 
         if flags.OUTSCOPE:

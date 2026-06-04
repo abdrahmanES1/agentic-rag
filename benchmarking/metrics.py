@@ -627,7 +627,8 @@ def compute_factscore(
             client, ollama_base_url, model,
             _FACTSCORE_VERIFY.format(document=document[:800], claim=claim), max_tokens=8,
         )
-        return "yes" in text.lower()
+        t = (text or "").lower()
+        return "yes" in t or "oui" in t or "نعم" in (text or "")
 
     supported_fracs, claim_counts = [], []
 
@@ -695,9 +696,7 @@ def compute_rgb_robustness(
 
         # Negative rejection — OUTSCOPE items
         if category == "OUTSCOPE":
-            _ABSTAIN = ["لم أجد", "ماجدتش", "خارج نطاق", "غير متوفر",
-                        "Informations insuffisantes", "je ne peux pas", "[ERROR"]
-            abstained = result.get("is_outscope", False) or any(m in answer for m in _ABSTAIN)
+            abstained = result.get("is_outscope", False) or _has_abstain_marker(answer)
             neg_rej.append(1.0 if abstained else 0.0)
 
         # Information integration — MULTIHOP items
@@ -809,6 +808,25 @@ def _strip_citations(text: str) -> str:
     return _URL_RE.sub("", _CITATION_RE.sub("", text or ""))
 
 
+# Shared abstention markers — the phrases systems actually emit when they refuse
+# ("غير متوفر"/"not available"), used by BOTH the abstain metric and RGB. Tuned for
+# precision: excludes generic "لا توجد/لا يوجد" which appear in real answers
+# ("no fees required"). Matched case-insensitively (lower() leaves Arabic intact).
+ABSTAIN_MARKERS = [
+    "غير متوفر", "غير متاح", "غير موجودة في", "غير موجود في",
+    "ماكاينةش فالوثائق", "ماكاينةش ف لوثائق", "لم أجد", "لم نجد",
+    "خارج نطاق", "خارج اختصاص", "خارج النطاق",
+    "non disponible", "n'est pas disponible", "ne figure pas",
+    "informations insuffisantes", "je ne peux pas", "hors de",
+    "not available", "[error", "makaynach f",
+]
+
+
+def _has_abstain_marker(answer: str) -> bool:
+    a = (answer or "").lower()
+    return any(m in a for m in ABSTAIN_MARKERS)
+
+
 def compute_domain_precision(
     results: List[Dict],
     gold_items: List[Dict],
@@ -845,10 +863,16 @@ def compute_domain_precision(
             hit = any(_normalize(kw) in ans_norm for kw in numeric_kws)
             cost_hits.append(1.0 if hit else 0.0)
 
-        # Dialect response match — Darija/Arabizi Q → answer has Arabic chars
-        if language in ("Darija", "Arabizi"):
+        # Dialect response match — the dialect Q should be answered in the dialect,
+        # NOT French. Darija → Arabic script; Arabizi → romanized (digit-letters)
+        # OR Arabic script (both are Moroccan colloquial); pure-French = miss.
+        if language == "Darija":
             arabic_chars = sum(1 for c in answer if "؀" <= c <= "ۿ")
             dialect_matches.append(1.0 if arabic_chars >= 10 else 0.0)
+        elif language == "Arabizi":
+            arabic_chars = sum(1 for c in answer if "؀" <= c <= "ۿ")
+            has_arabizi = bool(re.search(r"[a-zA-Z][2379]|[2379][a-zA-Z]", answer))
+            dialect_matches.append(1.0 if (arabic_chars >= 10 or has_arabizi) else 0.0)
 
         # MULTIHOP keyword hit
         if category == "MULTIHOP" and keywords:
@@ -1083,16 +1107,10 @@ def compute_abstain_accuracy(
 
     Returns: TP, FP, TN, FN, precision, recall, f1, accuracy
     """
-    _ABSTAIN_MARKERS = [
-        "لم أجد", "ماجدتش", "خارج نطاق", "Informations insuffisantes",
-        "hors de ma compétence", "je ne peux pas", "[ERROR",
-    ]
-
     def _is_abstained(result: Dict) -> bool:
         if result.get("is_outscope") or result.get("is_abstained"):
             return True
-        answer = result.get("answer", "")
-        return any(m in answer for m in _ABSTAIN_MARKERS)
+        return _has_abstain_marker(result.get("answer", ""))
 
     TP = FP = TN = FN = 0
     for result, gold in zip(results, gold_items):
