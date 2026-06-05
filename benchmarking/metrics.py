@@ -1026,8 +1026,15 @@ def compute_bertscore(
         log.warning("[BERTScore] bert-score not installed — skipping. pip install bert-score")
         return {}
 
-    predictions = [_strip_citations(r.get("answer", "")) for r in results]
-    references  = [g.get(gold_answer_key, "") for g in gold_items]
+    # BERTScore's multilingual encoder does NOT reliably embed Arabizi (romanized
+    # Latin-script Arabic) — validated: matched-vs-mismatched discrimination is
+    # ~3-4x weaker for Arabizi than for Darija/MSA/French. Exclude Arabizi here;
+    # it's scored by arabizi_normalized_f1 + human evaluation instead.
+    pairs = [(_strip_citations(r.get("answer", "")), g.get(gold_answer_key, ""))
+             for r, g in zip(results, gold_items)
+             if (g.get("language") or "") != "Arabizi"]
+    predictions = [p for p, _ in pairs]
+    references  = [ref for _, ref in pairs]
 
     if not any(predictions) or not any(references):
         return {}
