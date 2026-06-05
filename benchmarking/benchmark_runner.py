@@ -944,11 +944,14 @@ def main() -> None:
 
     # ── Baselines ─────────────────────────────────────────────────────────────
     if args.baselines:
-        baselines = [b.strip() for b in args.baselines.split(",") if b.strip()]
-        unknown = [b for b in baselines if b not in ALL_BASELINES]
-        if unknown:
-            log.error("Unknown baseline(s): %s", unknown)
-            sys.exit(1)
+        if args.baselines.strip().lower() in ("none", "-"):
+            baselines = []          # run ONLY v12 (no baselines)
+        else:
+            baselines = [b.strip() for b in args.baselines.split(",") if b.strip()]
+            unknown = [b for b in baselines if b not in ALL_BASELINES]
+            if unknown:
+                log.error("Unknown baseline(s): %s", unknown)
+                sys.exit(1)
     else:
         baselines = list(ALL_BASELINES)
 
