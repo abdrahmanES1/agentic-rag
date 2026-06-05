@@ -1026,7 +1026,7 @@ def compute_bertscore(
         log.warning("[BERTScore] bert-score not installed — skipping. pip install bert-score")
         return {}
 
-    predictions = [r.get("answer", "") for r in results]
+    predictions = [_strip_citations(r.get("answer", "")) for r in results]
     references  = [g.get(gold_answer_key, "") for g in gold_items]
 
     if not any(predictions) or not any(references):
@@ -1064,6 +1064,49 @@ def compute_bertscore(
         except Exception as exc2:
             log.warning("[BERTScore] Both models failed: %s", exc2)
             return {}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 4b. Romanization-normalized Arabizi F1 (no standard spelling -> token_f1 unfair)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _norm_arabizi(text: str) -> set:
+    """
+    Canonicalize Moroccan Arabizi so spelling variants collide: map digit-letters
+    to rough phonetic letters, drop residual digits/punct, collapse doubled
+    letters, and reduce to a consonant skeleton (vowels vary most across writers).
+    """
+    t = (text or "").lower()
+    t = t.translate(str.maketrans("372985", "ahqakh"))  # 3=3ayn,7=7a,2=hamza,9=qaf,8=gh,5=kha
+    t = re.sub(r"[0-9]", "", t)
+    t = re.sub(r"[^a-z\s]", " ", t)          # keep Latin letters only
+    t = re.sub(r"(.)\1+", r"\1", t)          # collapse doubled letters
+    t = re.sub(r"[aeiou]", "", t)            # consonant skeleton
+    return set(w for w in t.split() if len(w) >= 2)
+
+
+def compute_arabizi_normalized(results: List[Dict], gold_items: List[Dict],
+                               gold_answer_key: str = "gold_answer") -> Dict[str, float]:
+    """
+    Romanization-normalized token-F1 over Arabizi items only. Moroccan Arabizi has
+    no standard orthography, so two correct answers can share almost no surface
+    tokens; raw token_f1 therefore *understates* Arabizi quality. This collapses
+    spelling variants before comparison for a fairer dialect score.
+    """
+    f1s = []
+    for r, g in zip(results, gold_items):
+        if (g.get("language") or "") != "Arabizi":
+            continue
+        pred = _norm_arabizi(_strip_citations(r.get("answer", "")))
+        ref = _norm_arabizi(g.get(gold_answer_key, ""))
+        if not pred or not ref:
+            continue
+        c = len(pred & ref)
+        pr, rc = c / len(pred), c / len(ref)
+        f1s.append(0.0 if pr + rc == 0 else 2 * pr * rc / (pr + rc))
+    if not f1s:
+        return {}
+    return {"arabizi_normalized_f1": round(sum(f1s) / len(f1s), 4)}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1339,6 +1382,7 @@ _METRIC_ORDER = [
     "exact_match", "token_f1", "rouge_l",
     # ── Semantic ──────────────────────────────────────────────────────────────
     "bertscore_f1", "bertscore_precision", "bertscore_recall",
+    "arabizi_normalized_f1",
     # ── RAGAS core ────────────────────────────────────────────────────────────
     "faithfulness", "answer_relevancy", "context_precision", "context_recall",
     # ── RAGAS extended (ragas >= 0.2.x) ──────────────────────────────────────

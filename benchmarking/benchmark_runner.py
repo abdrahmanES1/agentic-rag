@@ -663,6 +663,7 @@ def compute_all_scores(
         if with_gt:
             from benchmarking.metrics import (
                 compute_abstain_accuracy,
+                compute_arabizi_normalized,
                 compute_bertscore,
                 compute_keyword_hit_rate,
                 compute_lexical_scores,
@@ -677,6 +678,11 @@ def compute_all_scores(
                 b_scores.update(compute_bertscore(results, testset))
             except Exception as exc:
                 log.warning("[GT] BERTScore failed for %s: %s", b_name, exc)
+
+            try:
+                b_scores.update(compute_arabizi_normalized(results, testset))
+            except Exception as exc:
+                log.warning("[GT] Arabizi-normalized F1 failed for %s: %s", b_name, exc)
 
             if run_ragas:
                 try:
