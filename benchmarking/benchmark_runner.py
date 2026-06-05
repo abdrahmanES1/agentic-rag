@@ -591,9 +591,13 @@ def compute_all_scores(
             class _R:
                 def __init__(self, d):
                     self.latency_sec = d.get("latency_sec", 0.0)
-                    self.is_outscope = d.get("is_outscope", False)
+                    # v12 uses is_abstained; baselines use is_outscope
+                    self.is_outscope = d.get("is_outscope", d.get("is_abstained", False))
                     self.answer = d.get("answer", "")
-                    self.contexts = d.get("contexts", []) or []
+                    # v12 stores contexts under ragas_contexts / retrieval.contexts,
+                    # not the top-level "contexts" key (which baselines use)
+                    self.contexts = (d.get("contexts") or d.get("ragas_contexts")
+                                     or d.get("retrieval", {}).get("contexts") or [])
             agg = aggregate_baseline_results([_R(r) for r in results])
             b_scores.update(agg)
         except Exception as exc:
