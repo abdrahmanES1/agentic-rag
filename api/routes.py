@@ -35,7 +35,7 @@ from pathlib import Path
 
 from flask import Flask, Response, jsonify, request, stream_with_context
 from pipeline.config import settings
-from pipeline.language import classify_question, detect_language, translate_to_msa
+from pipeline.language import classify_question, detect_and_translate, detect_language, translate_to_msa
 from pipeline.models import QuestionFlags
 from pipeline.pipeline import MoroccanRAGPipeline
 
@@ -202,15 +202,13 @@ def register_routes(app: Flask, pipeline: MoroccanRAGPipeline) -> None:
             return jsonify({"error": "Missing question"}), 400
 
         try:
-            language, confidence = detect_language(q)
+            language, confidence, msa, llm_intents = detect_and_translate(q, pipeline.ollama)
             rq = q
             translated = False
-            if language in ("Darija", "Arabizi") and settings.enable_query_translation:
-                msa = translate_to_msa(q, language, pipeline.ollama)
-                if msa:
-                    rq, translated = msa, True
+            if language in ("Darija", "Arabizi") and msa and settings.enable_query_translation:
+                rq, translated = msa, True
 
-            flags = classify_question(rq, language, confidence, pipeline.ollama)
+            flags = classify_question(rq, language, confidence, pipeline.ollama, llm_intents=llm_intents)
 
             if flags.OUTSCOPE:
                 return jsonify(
