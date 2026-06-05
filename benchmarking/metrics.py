@@ -1178,12 +1178,18 @@ def compute_bertscore(
     gold_items: List[Dict],
     gold_answer_key: str = "gold_answer",
     model_type: str = "xlm-roberta-large",
+    device: Optional[str] = None,
 ) -> Dict[str, float]:
     """
     BERTScore using a multilingual encoder (xlm-roberta-large).
 
     Covers Arabic MSA, French, and Darija better than monolingual BERT.
     Falls back to bert-base-multilingual-cased if xlm-roberta-large fails.
+
+    device : "cpu" / "cuda". Defaults to env BERTSCORE_DEVICE, else "cpu" — so
+    the metrics phase adds NO VRAM on top of the running API (xlm-roberta-large
+    would otherwise grab ~2.2 GB on CUDA). Set BERTSCORE_DEVICE=cuda for speed
+    if the GPU has headroom. Scores are device-independent.
 
     pip install bert-score
     """
@@ -1192,6 +1198,8 @@ def compute_bertscore(
     except ImportError:
         log.warning("[BERTScore] bert-score not installed — skipping. pip install bert-score")
         return {}
+
+    device = device or os.environ.get("BERTSCORE_DEVICE", "cpu")
 
     # BERTScore's multilingual encoder does NOT reliably embed Arabizi (romanized
     # Latin-script Arabic) — validated: matched-vs-mismatched discrimination is
@@ -1207,13 +1215,15 @@ def compute_bertscore(
         return {}
 
     try:
-        log.info("[BERTScore] Computing with model=%s on %d pairs…", model_type, len(predictions))
+        log.info("[BERTScore] Computing with model=%s on %d pairs (device=%s)…",
+                 model_type, len(predictions), device)
         P, R, F = bert_score_fn(
             predictions, references,
             model_type=model_type,
             lang="other",        # multilingual — no language-specific tokenizer
             verbose=False,
             rescale_with_baseline=False,
+            device=device,
         )
         return {
             "bertscore_precision": float(P.mean()),
@@ -1229,6 +1239,7 @@ def compute_bertscore(
                 model_type="bert-base-multilingual-cased",
                 lang="other",
                 verbose=False,
+                device=device,
             )
             return {
                 "bertscore_precision": float(P.mean()),
