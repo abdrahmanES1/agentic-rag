@@ -549,16 +549,25 @@ def compute_all_scores(
         compute_cross_lingual_consistency,
         compute_v12_specific,
         build_ragas_llm,
+        build_ragas_embeddings,
     )
 
     # Wire RAGAS to the SAME judge model as the other LLM-judge metrics (instead
     # of RAGAS's version-dependent OpenAI default). Built once, reused everywhere.
+    # Embeddings are LOCAL (bge-m3) so RAGAS works with chat-only judge endpoints
+    # (OpenRouter/Groq/Gemini) that have no /embeddings API — and so answer_*
+    # metrics use a multilingual embedder instead of OpenAI ada.
     _ragas_llm = None
+    _ragas_emb = None
     if run_ragas:
         try:
             _ragas_llm = build_ragas_llm(_judge_url, _judge_model)
         except Exception as exc:
             log.warning("[RAGAS] could not build judge LLM (%s) — RAGAS will use its default", exc)
+        try:
+            _ragas_emb = build_ragas_embeddings(device=os.environ.get("RAGAS_EMBED_DEVICE", "cpu"))
+        except Exception as exc:
+            log.warning("[RAGAS] could not build local embeddings (%s) — will fall back to OpenAI", exc)
 
     scores_by_baseline: Dict[str, Dict[str, float]] = {}
 
@@ -590,13 +599,14 @@ def compute_all_scores(
         # ── RAGAS reference-free core ─────────────────────────────────────────
         if run_ragas:
             try:
-                from ragas.metrics import answer_relevancy, context_precision, faithfulness
+                from ragas.metrics import answer_relevancy, context_precision, faithfulnes
                 ds = build_ragas_dataset(results, testset)
                 ragas = compute_ragas_scores(
                     ds,
                     metrics=[faithfulness, answer_relevancy, context_precision],
                     extended=False,
                     llm=_ragas_llm,
+                    embeddings=_ragas_emb,
                 )
                 b_scores.update(ragas)
             except Exception as exc:
@@ -708,6 +718,7 @@ def compute_all_scores(
                                  context_precision, context_recall],
                         extended=True,
                         llm=_ragas_llm,
+                        embeddings=_ragas_emb,
                     ))
                 except Exception as exc:
                     log.warning("[GT] RAGAS extended failed for %s: %s", b_name, exc)
@@ -738,7 +749,8 @@ def compute_all_scores(
             if run_ragas:
                 try:
                     from benchmarking.adapters.ragas_adapter import build_ragas_dataset as _build_ragas
-                    b_scores.update(compute_ragas_extended(_build_ragas(results, testset), llm=_ragas_llm))
+                    b_scores.update(compute_ragas_extended(_build_ragas(results, testset),
+                                                           llm=_ragas_llm, embeddings=_ragas_emb))
                 except Exception as exc:
                     log.warning("[GT] RAGAS-extended (v2) failed for %s: %s", b_name, exc)
 

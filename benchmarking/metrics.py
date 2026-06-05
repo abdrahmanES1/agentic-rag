@@ -66,6 +66,7 @@ def _openai_client(base_url: str, api_key: Optional[str] = None):
 
     # Remote endpoint — pick provider-specific key
     _PROVIDER_KEYS = [
+        ("openrouter.ai",   "OPENROUTER_API_KEY"),
         ("googleapis.com",  "GEMINI_API_KEY"),
         ("openai.com",      "OPENAI_API_KEY"),
         ("groq.com",        "GROQ_API_KEY"),
@@ -198,6 +199,7 @@ def _resolve_judge_key(base_url: str) -> str:
     if _is_local_endpoint(base_url):
         return os.environ.get("OPENAI_API_KEY", "ollama")
     for domain, env_var in [
+        ("openrouter.ai", "OPENROUTER_API_KEY"),
         ("googleapis.com", "GEMINI_API_KEY"), ("openai.com", "OPENAI_API_KEY"),
         ("groq.com", "GROQ_API_KEY"), ("anthropic.com", "ANTHROPIC_API_KEY"),
         ("azure", "AZURE_OPENAI_API_KEY"), ("together.ai", "TOGETHER_API_KEY"),
@@ -279,6 +281,41 @@ def build_ragas_llm(judge_url: str, judge_model: str, timeout: int = 180):
                       temperature=0.0, timeout=timeout, max_retries=2)
     log.info("[RAGAS] judge LLM wired: model=%s endpoint=%s", judge_model, judge_url)
     return LangchainLLMWrapper(chat)
+
+
+def build_ragas_embeddings(model: str = "BAAI/bge-m3", device: str = "cpu"):
+    """
+    Local embeddings for RAGAS's embedding-based metrics (answer_relevancy,
+    answer_similarity, answer_correctness).
+
+    REQUIRED for chat-only judge endpoints that expose NO /embeddings API —
+    e.g. OpenRouter, Groq, Gemini's OpenAI-compat proxy. Without it RAGAS falls
+    back to OpenAI embeddings (needs a real OPENAI_API_KEY) and those metrics
+    fail. bge-m3 is multilingual → better for Arabic/Darija than OpenAI ada,
+    and matches the embedder the RAG system itself uses.
+
+    Runs on CPU by default to avoid VRAM contention with the running API's
+    models. Override with RAGAS_EMBED_DEVICE=cuda if the GPU has headroom.
+
+    Returns a LangchainEmbeddingsWrapper, or None if unavailable.
+    """
+    try:
+        from ragas.embeddings import LangchainEmbeddingsWrapper
+        try:
+            from langchain_huggingface import HuggingFaceEmbeddings
+        except ImportError:
+            from langchain_community.embeddings import HuggingFaceEmbeddings
+    except ImportError:
+        log.warning("[RAGAS] HF embeddings unavailable — embedding-based RAGAS "
+                    "metrics (answer_relevancy/similarity/correctness) will fail")
+        return None
+    emb = HuggingFaceEmbeddings(
+        model_name=model,
+        model_kwargs={"device": device},
+        encode_kwargs={"normalize_embeddings": True},
+    )
+    log.info("[RAGAS] local embeddings wired: %s on %s", model, device)
+    return LangchainEmbeddingsWrapper(emb)
 
 
 def compute_ragas_scores(
