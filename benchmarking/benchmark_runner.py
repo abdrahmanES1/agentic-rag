@@ -602,7 +602,7 @@ def compute_all_scores(
         # ── RAGAS reference-free core ─────────────────────────────────────────
         if run_ragas:
             try:
-                from ragas.metrics import answer_relevancy, context_precision, faithfulnes
+                from ragas.metrics import answer_relevancy, context_precision, faithfulness
                 ds = build_ragas_dataset(results, testset)
                 ragas = compute_ragas_scores(
                     ds,
