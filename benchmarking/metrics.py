@@ -216,7 +216,15 @@ def _resolve_judge_key(base_url: str) -> str:
     return k
 
 
-def _ragas_result_to_dict(result) -> Dict[str, float]:
+# Embedding-based RAGAS metrics (bge-m3 / xlm-roberta family). Validated to be
+# unreliable for Arabizi (romanized Latin Arabic): matched-vs-mismatched
+# discrimination ~4x weaker than Darija/MSA/French. Arabizi rows are excluded
+# from THESE metrics only — the LLM-based RAGAS metrics (faithfulness,
+# context_precision, context_recall) keep all languages.
+_RAGAS_EMBED_SUBSTRINGS = ("similarity", "relevancy", "correctness")
+
+
+def _ragas_result_to_dict(result, languages: Optional[List[str]] = None) -> Dict[str, float]:
     """
     Extract aggregate metric scores from a RAGAS result across versions.
 
@@ -225,22 +233,38 @@ def _ragas_result_to_dict(result) -> Dict[str, float]:
                   per-row {metric: value} dicts. Aggregate = mean over rows,
                   skipping NaN (failed/timed-out rows) so partial runs still
                   yield a number.
+
+    languages : optional per-row language labels (aligned 1:1 with the dataset
+                rows). When provided, Arabizi rows are dropped from the
+                embedding-based metrics (_RAGAS_EMBED_SUBSTRINGS) because the
+                multilingual embedder can't reliably embed romanized Arabic.
     """
     import math
-    # Old dict-like API
+
+    def _is_embed(metric_name: str) -> bool:
+        ml = metric_name.lower()
+        return any(s in ml for s in _RAGAS_EMBED_SUBSTRINGS)
+
+    # Old dict-like API (no per-row info → can't language-filter; return as-is)
     if hasattr(result, "items"):
         try:
             return {str(k): float(v) for k, v in result.items()}
         except Exception:
             pass
-    # EvaluationResult.scores = list[dict]
+    # EvaluationResult.scores = list[dict], aligned 1:1 with dataset rows
     scores = getattr(result, "scores", None)
     if scores:
+        rows = [dict(r) for r in scores]
+        langs = languages if (languages and len(languages) == len(rows)) else None
         agg: Dict[str, list] = {}
-        for row in scores:
-            for k, v in dict(row).items():
-                if isinstance(v, (int, float)) and not math.isnan(float(v)):
-                    agg.setdefault(str(k), []).append(float(v))
+        for i, row in enumerate(rows):
+            is_arabizi = bool(langs) and langs[i] == "Arabizi"
+            for k, v in row.items():
+                if not isinstance(v, (int, float)) or math.isnan(float(v)):
+                    continue
+                if is_arabizi and _is_embed(str(k)):
+                    continue  # bge-m3 unreliable on Arabizi → skip for embed metrics
+                agg.setdefault(str(k), []).append(float(v))
         if agg:
             return {k: sum(vs) / len(vs) for k, vs in agg.items() if vs}
     # Last resort: to_pandas numeric columns
@@ -324,6 +348,7 @@ def compute_ragas_scores(
     extended: bool = True,
     llm=None,
     embeddings=None,
+    languages: Optional[List[str]] = None,
 ) -> Dict[str, float]:
     """
     Run the full RAGAS suite on a ragas.Dataset.
@@ -384,14 +409,15 @@ def compute_ragas_scores(
     result = evaluate(ragas_dataset, metrics=metrics, **_kw)
     log.info("[RAGAS] Done in %.1fs", time.time() - t0)
 
-    return _ragas_result_to_dict(result)
+    return _ragas_result_to_dict(result, languages=languages)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 1b. RAGAS — additional SOTA metrics (ragas >= 0.2.x)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def compute_ragas_extended(ragas_dataset, llm=None, embeddings=None) -> Dict[str, float]:
+def compute_ragas_extended(ragas_dataset, llm=None, embeddings=None,
+                           languages: Optional[List[str]] = None) -> Dict[str, float]:
     """
     Extra RAGAS metrics available in ragas >= 0.2.x:
       - context_entity_recall  : entities from gold answer present in retrieved contexts
@@ -420,7 +446,7 @@ def compute_ragas_extended(ragas_dataset, llm=None, embeddings=None) -> Dict[str
             if embeddings is not None:
                 _kw["embeddings"] = embeddings
             result = evaluate(ragas_dataset, metrics=[metric_obj], **_kw)
-            _vals = list(_ragas_result_to_dict(result).values())
+            _vals = list(_ragas_result_to_dict(result, languages=languages).values())
             out[metric_name] = _vals[0] if _vals else float("nan")
             log.info("[RAGAS-ext] %s = %.4f", metric_name, out[metric_name])
         except Exception as exc:

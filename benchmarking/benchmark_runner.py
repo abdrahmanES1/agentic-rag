@@ -568,6 +568,9 @@ def compute_all_scores(
             _ragas_emb = build_ragas_embeddings(device=os.environ.get("RAGAS_EMBED_DEVICE", "cpu"))
         except Exception as exc:
             log.warning("[RAGAS] could not build local embeddings (%s) — will fall back to OpenAI", exc)
+    # Per-row language labels (aligned 1:1 with testset) so RAGAS's embedding-based
+    # metrics can drop Arabizi rows (bge-m3 can't reliably embed romanized Arabic).
+    _ragas_langs = [it.get("language") or it.get("expected_language") for it in testset]
 
     scores_by_baseline: Dict[str, Dict[str, float]] = {}
 
@@ -607,6 +610,7 @@ def compute_all_scores(
                     extended=False,
                     llm=_ragas_llm,
                     embeddings=_ragas_emb,
+                    languages=_ragas_langs,
                 )
                 b_scores.update(ragas)
             except Exception as exc:
@@ -719,6 +723,7 @@ def compute_all_scores(
                         extended=True,
                         llm=_ragas_llm,
                         embeddings=_ragas_emb,
+                        languages=_ragas_langs,
                     ))
                 except Exception as exc:
                     log.warning("[GT] RAGAS extended failed for %s: %s", b_name, exc)
@@ -750,7 +755,8 @@ def compute_all_scores(
                 try:
                     from benchmarking.adapters.ragas_adapter import build_ragas_dataset as _build_ragas
                     b_scores.update(compute_ragas_extended(_build_ragas(results, testset),
-                                                           llm=_ragas_llm, embeddings=_ragas_emb))
+                                                           llm=_ragas_llm, embeddings=_ragas_emb,
+                                                           languages=_ragas_langs))
                 except Exception as exc:
                     log.warning("[GT] RAGAS-extended (v2) failed for %s: %s", b_name, exc)
 
