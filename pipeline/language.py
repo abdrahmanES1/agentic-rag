@@ -375,6 +375,29 @@ def check_legal_keywords(question: str) -> bool:
     )
 
 
+_AR_LETTER = "ء-ي٠-٩"
+# Arabic proclitics that may attach before a stem (article + و/ف/ب/ل/ك …).
+_AR_PROCLITIC = r"(?:بال|وال|فال|كال|لل|ال|و|ف|ب|ل|ك)?"
+
+
+def _intent_kw_hit(keywords, text: str, text_lower: str) -> bool:
+    """
+    True if any keyword is present. Latin keywords use lowercase substring;
+    Arabic keywords use proclitic-aware word boundaries so a fee word (رسوم)
+    does NOT match inside a decree word (مرسوم), nor مدة inside عمدة.
+    """
+    for kw in keywords:
+        if kw.isascii():
+            if kw in text_lower:
+                return True
+        else:
+            pat = (r"(?<![" + _AR_LETTER + r"])" + _AR_PROCLITIC
+                   + re.escape(kw) + r"(?![" + _AR_LETTER + r"])")
+            if re.search(pat, text):
+                return True
+    return False
+
+
 def classify_question(question: str, language: str, confidence: float, ollama=None,
                       llm_intents=None):
     """
@@ -392,22 +415,33 @@ def classify_question(question: str, language: str, confidence: float, ollama=No
     is_legal = check_legal_keywords(question)
     is_multihop, _conf, _signals, hop_count = detect_multihop(question)
 
+    # Intent detection: UNION the LLM's intents with deterministic keyword rules.
+    # The LLM under-detects on compound dialect questions (e.g. it returned only
+    # PROCEDURE for a docs+cost+deadline question), so keyword rules — including
+    # Darija/Arabizi markers — recover the missed intents. Rules run on `question`,
+    # which is the MSA-translated query for dialects, AND on dialect surface forms.
+    INTENT_RULES = [
+        ("PROCEDURE", ["إجراء", "خطوات", "طريقة", "كيفية", "procédure", "étapes",
+                       "comment faire", "démarche", "kifach", "kifash", "kif ndir"]),
+        ("COST",      ["رسوم", "تكلفة", "سعر", "ثمن", "درهم", "frais", "coût", "prix",
+                       "tarif", "dirhams", "taman", "tmn", "flous", "flos", "bchhal", "bch7al"]),
+        ("DEADLINE",  ["مدة", "أجل", "وقت", "متى", "délai", "durée", "jours", "semaines",
+                       "date limite", "lwaqt", "waqt", "lmodda", "lmoda", "wqt", "chhal d lwaqt"]),
+        ("ELIGIBILITY", ["شروط", "أهلية", "يحق", "من يستفيد", "conditions", "éligibilité",
+                         "qui peut", "bénéficier", "chroot", "chkon y9der"]),
+        ("LEGAL",     LEGAL_KEYWORDS_AR + LEGAL_KEYWORDS_FR),
+        ("DOCUMENTS", ["وثيقة", "وثائق", "أوراق", "ورقة", "ملف", "مستند", "document",
+                       "pièce", "dossier", "formulaire", "lwaraq", "lwra9", "wra9", "waraq", "papiers"]),
+    ]
+    kw_intents = [intent for intent, keywords in INTENT_RULES
+                  if _intent_kw_hit(keywords, question, q_lower)]
+
     if llm_intents:
-        intents = [i for i in llm_intents if i in _LLM_INTENTS]
+        llm = [i for i in llm_intents if i in _LLM_INTENTS]
+        # union (LLM order first, then keyword-recovered intents), de-duplicated
+        intents = list(dict.fromkeys(llm + kw_intents))
     else:
-        # Fallback: intent detection via keyword matching
-        INTENT_RULES = [
-            ("PROCEDURE", ["إجراء", "خطوات", "طريقة", "كيفية", "procédure", "étapes", "comment faire", "démarche"]),
-            ("COST",      ["رسوم", "تكلفة", "سعر", "ثمن", "درهم", "frais", "coût", "prix", "tarif", "dirhams"]),
-            ("DEADLINE",  ["مدة", "أجل", "وقت", "متى", "délai", "durée", "jours", "semaines", "date limite"]),
-            ("ELIGIBILITY", ["شروط", "أهلية", "يحق", "من يستفيد", "conditions", "éligibilité", "qui peut", "bénéficier"]),
-            ("LEGAL",     LEGAL_KEYWORDS_AR + LEGAL_KEYWORDS_FR),
-            ("DOCUMENTS", ["وثيقة", "وثائق", "أوراق", "ورقة", "ملف", "مستند", "document", "pièce", "dossier", "formulaire"]),
-        ]
-        intents = []
-        for intent, keywords in INTENT_RULES:
-            if any(kw in question or kw in q_lower for kw in keywords):
-                intents.append(intent)
+        intents = kw_intents
 
     if is_legal and "LEGAL" not in intents:
         intents.append("LEGAL")
