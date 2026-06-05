@@ -190,10 +190,103 @@ _RAGAS_EXTENDED = [
 ]
 
 
+def _resolve_judge_key(base_url: str) -> str:
+    """Resolve the API key string for a judge endpoint (mirrors _openai_client)."""
+    key = os.environ.get("JUDGE_API_KEY", "")
+    if key:
+        return key
+    if _is_local_endpoint(base_url):
+        return os.environ.get("OPENAI_API_KEY", "ollama")
+    for domain, env_var in [
+        ("googleapis.com", "GEMINI_API_KEY"), ("openai.com", "OPENAI_API_KEY"),
+        ("groq.com", "GROQ_API_KEY"), ("anthropic.com", "ANTHROPIC_API_KEY"),
+        ("azure", "AZURE_OPENAI_API_KEY"), ("together.ai", "TOGETHER_API_KEY"),
+        ("mistral.ai", "MISTRAL_API_KEY"),
+    ]:
+        if domain in base_url:
+            k = os.environ.get(env_var, "")
+            if k:
+                return k
+            raise EnvironmentError(f"{env_var} not set for judge endpoint {base_url}")
+    k = os.environ.get("OPENAI_API_KEY", "")
+    if not k:
+        raise EnvironmentError(f"Judge endpoint {base_url} requires a key (set JUDGE_API_KEY).")
+    return k
+
+
+def _ragas_result_to_dict(result) -> Dict[str, float]:
+    """
+    Extract aggregate metric scores from a RAGAS result across versions.
+
+    ragas <0.2  : evaluate() returned a dict (had .items()).
+    ragas 0.2+  : returns an EvaluationResult whose `.scores` is a list of
+                  per-row {metric: value} dicts. Aggregate = mean over rows,
+                  skipping NaN (failed/timed-out rows) so partial runs still
+                  yield a number.
+    """
+    import math
+    # Old dict-like API
+    if hasattr(result, "items"):
+        try:
+            return {str(k): float(v) for k, v in result.items()}
+        except Exception:
+            pass
+    # EvaluationResult.scores = list[dict]
+    scores = getattr(result, "scores", None)
+    if scores:
+        agg: Dict[str, list] = {}
+        for row in scores:
+            for k, v in dict(row).items():
+                if isinstance(v, (int, float)) and not math.isnan(float(v)):
+                    agg.setdefault(str(k), []).append(float(v))
+        if agg:
+            return {k: sum(vs) / len(vs) for k, vs in agg.items() if vs}
+    # Last resort: to_pandas numeric columns
+    try:
+        df = result.to_pandas()
+        skip = {"user_input", "question", "retrieved_contexts", "contexts", "response",
+                "answer", "reference", "ground_truth", "reference_contexts"}
+        out: Dict[str, float] = {}
+        for col in df.columns:
+            if col in skip:
+                continue
+            if str(df[col].dtype).startswith(("float", "int")):
+                out[str(col)] = float(df[col].mean())
+        return out
+    except Exception:
+        return {}
+
+
+def build_ragas_llm(judge_url: str, judge_model: str, timeout: int = 180):
+    """
+    Wrap the configured judge model as a RAGAS LLM so RAGAS metrics use the SAME
+    model as ARES/G-Eval/FActScore — instead of RAGAS's version-dependent OpenAI
+    default. Returns a LangchainLLMWrapper, or None if RAGAS/langchain missing.
+
+    NOTE: a LOCAL Ollama judge goes through the /v1 endpoint here (langchain
+    ChatOpenAI is OpenAI-protocol only) and is subject to the think-mode
+    empty-content issue — run RAGAS with a CLOUD judge (e.g. gpt-4o-mini) for
+    reliable scores.
+    """
+    try:
+        from ragas.llms import LangchainLLMWrapper
+        from langchain_openai import ChatOpenAI
+    except ImportError:
+        log.warning("[RAGAS] langchain_openai/ragas wrapper unavailable — using RAGAS default LLM")
+        return None
+    key = _resolve_judge_key(judge_url)
+    chat = ChatOpenAI(model=judge_model, base_url=judge_url, api_key=key,
+                      temperature=0.0, timeout=timeout, max_retries=2)
+    log.info("[RAGAS] judge LLM wired: model=%s endpoint=%s", judge_model, judge_url)
+    return LangchainLLMWrapper(chat)
+
+
 def compute_ragas_scores(
     ragas_dataset,
     metrics: Optional[List] = None,
     extended: bool = True,
+    llm=None,
+    embeddings=None,
 ) -> Dict[str, float]:
     """
     Run the full RAGAS suite on a ragas.Dataset.
@@ -246,17 +339,22 @@ def compute_ragas_scores(
 
     log.info("[RAGAS] Evaluating %d rows with %d metrics…", len(ragas_dataset), len(metrics))
     t0 = time.time()
-    result = evaluate(ragas_dataset, metrics=metrics)
+    _kw = {}
+    if llm is not None:
+        _kw["llm"] = llm
+    if embeddings is not None:
+        _kw["embeddings"] = embeddings
+    result = evaluate(ragas_dataset, metrics=metrics, **_kw)
     log.info("[RAGAS] Done in %.1fs", time.time() - t0)
 
-    return {str(k): float(v) for k, v in result.items()}
+    return _ragas_result_to_dict(result)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 1b. RAGAS — additional SOTA metrics (ragas >= 0.2.x)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def compute_ragas_extended(ragas_dataset) -> Dict[str, float]:
+def compute_ragas_extended(ragas_dataset, llm=None, embeddings=None) -> Dict[str, float]:
     """
     Extra RAGAS metrics available in ragas >= 0.2.x:
       - context_entity_recall  : entities from gold answer present in retrieved contexts
@@ -279,8 +377,14 @@ def compute_ragas_extended(ragas_dataset) -> Dict[str, float]:
             metric_obj = getattr(mod, import_name, None)
             if metric_obj is None:
                 continue
-            result = evaluate(ragas_dataset, metrics=[metric_obj])
-            out[metric_name] = float(list(result.items())[0][1])
+            _kw = {}
+            if llm is not None:
+                _kw["llm"] = llm
+            if embeddings is not None:
+                _kw["embeddings"] = embeddings
+            result = evaluate(ragas_dataset, metrics=[metric_obj], **_kw)
+            _vals = list(_ragas_result_to_dict(result).values())
+            out[metric_name] = _vals[0] if _vals else float("nan")
             log.info("[RAGAS-ext] %s = %.4f", metric_name, out[metric_name])
         except Exception as exc:
             log.debug("[RAGAS-ext] %s unavailable: %s", metric_name, exc)
