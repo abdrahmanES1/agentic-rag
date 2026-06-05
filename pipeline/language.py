@@ -275,9 +275,15 @@ def detect_and_translate(question: str, ollama=None) -> Tuple[str, float, Option
     if ollama is not None:
         lang, msa, intents = _llm_detect_translate(question, ollama)
         if lang:
-            # gemma labels romanized-with-digits as Darija/french → force Arabizi.
-            if lang in ("Darija", "french") and _is_latin_script(text) and _has_arabizi_digits(text):
+            # Latin script + Arabizi digits is UNAMBIGUOUSLY Arabizi — override ANY
+            # LLM label. gemma mislabels romanized Darija as Darija/french AND
+            # sometimes as arabic_msa; but a Latin-script text can never be
+            # arabic_msa (Arabic script by definition). This also re-enables
+            # translation (msa) for the misdetected-as-MSA case.
+            if lang != "Arabizi" and _is_latin_script(text) and _has_arabizi_digits(text):
                 lang = "Arabizi"
+                if ollama and not (msa and msa.strip()):
+                    msa = translate_to_msa(question, "Arabizi", ollama) or msa
             msa_out = msa.strip() if (lang in ("Darija", "Arabizi") and msa and msa.strip()) else None
             return lang, 0.85, msa_out, (intents or None)
 
