@@ -702,7 +702,7 @@ def compute_all_scores(
             try:
                 b_scores.update(compute_bertscore(results, testset))
             except Exception as exc:
-                log.warning("[GT] BERTScore failed for %s: %s", b_name, exc)
+                log.warning("[GT] BERTScore failed for %s: %s", b_name, exc, exc_info=True)
 
             try:
                 b_scores.update(compute_arabizi_normalized(results, testset))
@@ -726,7 +726,7 @@ def compute_all_scores(
                         languages=_ragas_langs,
                     ))
                 except Exception as exc:
-                    log.warning("[GT] RAGAS extended failed for %s: %s", b_name, exc)
+                    log.warning("[GT] RAGAS extended failed for %s: %s", b_name, exc, exc_info=True)
 
             try:
                 b_scores.update(compute_keyword_hit_rate(results, testset))
