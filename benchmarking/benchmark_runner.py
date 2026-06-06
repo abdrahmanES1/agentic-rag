@@ -624,11 +624,17 @@ def compute_all_scores(
         if run_ares:
             try:
                 log.info("[ARES] Running LLM judge for %s…", b_name)
+                # max_contexts: v12 has 10+ ragas_contexts (multi-hop); baselines
+                # have 3-5. Using a fixed cap of 3 for v12 means the ARES judge
+                # only sees 30% of the evidence → claims from the other 70% look
+                # unsupported → systematic faithfulness undercount for multi-hop.
+                # Use 8 to cover v12's typical range without blowing up latency.
+                _max_ctx = 8 if b_name == "v12_pipeline" else 3
                 ares = compute_ares_scores(
                     results, testset,
                     ollama_base_url=_judge_url,
                     model=_judge_model,
-                    max_contexts=3,
+                    max_contexts=_max_ctx,
                 )
                 b_scores.update(ares)
             except Exception as exc:

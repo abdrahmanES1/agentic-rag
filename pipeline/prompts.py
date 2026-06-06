@@ -363,12 +363,14 @@ REFUSAL = {
     "Darija": "سمحلي، هاد السؤال خارج من اختصاصي. أنا متخصص غير في الخدمات العامة المغربية. يمكنك تزور service-public.ma",
     "arabic_msa": "عذراً، هذا السؤال خارج نطاق اختصاصي. أنا متخصص في الخدمات العامة المغربية فقط. يمكنكم زيارة service-public.ma",
     "french": "Désolé, cette question est hors de mon domaine. Je suis spécialisé dans les services publics marocains. Visitez service-public.ma",
+    "Arabizi": "smahli, had sso2al khrej mn ikhtisasi. ana motakhassis ghir f lkhadamat l3omumiya lmaghribiya. imkanك tzur service-public.ma",
 }
 
 ABSTAIN = {
     "Darija": "ماجدتش معلومات كافية فقاعدة البيانات باش نجاوبك. من فضلك تواصل مع المصلحة المختصة أو زور service-public.ma",
     "arabic_msa": "لم أجد معلومات كافية في قاعدة البيانات للإجابة على سؤالكم. يرجى التواصل مع المصلحة المختصة أو زيارة service-public.ma",
     "french": "Informations insuffisantes dans notre base de données. Veuillez contacter le service concerné ou visiter service-public.ma",
+    "Arabizi": "ma lqitch ma3lumat kafi f lqa3idat dyali bach njawbek. 3afak twasl m3a lmasla lmakhtasa aw zur service-public.ma",
 }
 
 FALLBACK = {
