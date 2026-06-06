@@ -1445,6 +1445,101 @@ def compute_v12_specific(results: List[Dict]) -> Dict[str, float]:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# 7b. Multi-hop success rate — agentic-RAG specific metric
+# ══════════════════════════════════════════════════════════════════════════════
+
+def compute_multihop_success_rate(
+    results: List[Dict],
+    gold_items: List[Dict],
+    min_steps: int = 2,
+    kw_threshold: float = 0.5,
+) -> Dict[str, float]:
+    """
+    Multi-hop success rate — measures whether the agentic pipeline actually
+    *used* multi-hop reasoning and *covered* all required aspects on MULTIHOP
+    questions. Composed of three sub-scores:
+
+    multihop_routing_rate   : fraction of MULTIHOP items where the system ran
+                              ≥ min_steps tool calls. Baselines always score 0
+                              (they never use multi-hop). Shows the agentic
+                              loop actually activates.
+
+    multihop_coverage_rate  : fraction of MULTIHOP items where the answer
+                              covers ≥ kw_threshold of the gold_keywords (the
+                              required procedure/aspect names). Measures
+                              whether multi-hop found ALL required evidence.
+
+    multihop_success_rate   : fraction of MULTIHOP items that satisfy BOTH
+                              routing (≥2 steps) AND coverage (≥50% keywords).
+                              The headline number — an item is only "succeeded"
+                              if the agent both activated the multi-hop path
+                              AND produced an answer covering the required facts.
+
+    multihop_avg_steps      : average tool calls on MULTIHOP items (v12 only).
+    multihop_items_n        : number of MULTIHOP items evaluated.
+
+    Parameters
+    ----------
+    results      : pipeline/baseline result dicts (aligned with gold_items)
+    gold_items   : testset items (need "category" and "gold_keywords")
+    min_steps    : tool calls needed to count as multi-hop (default 2)
+                   Baselines have 0 → routing_rate = 0.0 for all baselines.
+    kw_threshold : fraction of gold_keywords that must appear in the answer
+                   for coverage to be considered successful (default 0.5)
+    """
+    mh_pairs = [
+        (r, g)
+        for r, g in zip(results, gold_items)
+        if g.get("category") == "MULTIHOP" or g.get("is_multihop")
+    ]
+
+    if not mh_pairs:
+        return {}
+
+    CIT = re.compile(r"\[Source:[^\]]*\]", re.IGNORECASE)
+
+    routed = 0          # ran ≥ min_steps
+    covered = 0         # hit ≥ kw_threshold of gold_keywords
+    succeeded = 0       # both routed AND covered
+    total_steps = 0
+    n = len(mh_pairs)
+
+    for result, gold in mh_pairs:
+        # ── Routing: did the system actually run multiple hops? ──────────────
+        steps = result.get("agent_steps") or 0
+        # Also count tool_calls in execution_trace as fallback
+        if steps == 0:
+            et = result.get("execution_trace") or {}
+            steps = len(et.get("tool_calls") or [])
+        total_steps += steps
+        is_routed = steps >= min_steps
+
+        # ── Coverage: did the answer cover all required aspects? ─────────────
+        answer = CIT.sub("", result.get("answer", "")).lower()
+        kws = [k.lower() for k in (gold.get("gold_keywords") or []) if k]
+        if kws:
+            hits = sum(1 for kw in kws if kw in answer)
+            kw_rate = hits / len(kws)
+        else:
+            # No gold_keywords → check answer is non-trivial (>20 words)
+            kw_rate = 1.0 if len(answer.split()) > 20 else 0.0
+
+        is_covered = kw_rate >= kw_threshold
+
+        routed   += int(is_routed)
+        covered  += int(is_covered)
+        succeeded += int(is_routed and is_covered)
+
+    return {
+        "multihop_routing_rate":   round(routed   / n, 4),
+        "multihop_coverage_rate":  round(covered  / n, 4),
+        "multihop_success_rate":   round(succeeded / n, 4),
+        "multihop_avg_steps":      round(total_steps / n, 2),
+        "multihop_items_n":        n,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # 8. Per-category and per-language breakdowns
 # ══════════════════════════════════════════════════════════════════════════════
 

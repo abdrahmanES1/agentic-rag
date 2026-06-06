@@ -691,6 +691,15 @@ def compute_all_scores(
         except Exception as exc:
             log.warning("Domain precision metrics failed for %s: %s", b_name, exc)
 
+        # Multi-hop success rate (reference-free — uses gold_keywords + agent_steps)
+        # Runs for ALL systems: baselines get routing_rate=0 (they never multi-hop),
+        # v12 shows both routing and coverage. This is the key agentic differentiator.
+        try:
+            from benchmarking.metrics import compute_multihop_success_rate
+            b_scores.update(compute_multihop_success_rate(results, testset))
+        except Exception as exc:
+            log.warning("Multi-hop success rate failed for %s: %s", b_name, exc)
+
         # ══════════════════════════════════════════════════════════════════════
         # GROUND-TRUTH TIER — disabled until solid dataset is ready.
         # Enable with --with-gt once gold_answer / gold_keywords are in place.
