@@ -409,8 +409,8 @@ def verify_claim_llm_judge(
 
     response = ollama.generate(
         [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        temperature=0.1,
-        max_tokens=1000,
+        temperature=0.0,   # deterministic — single verdict enum, no creativity needed
+        max_tokens=64,     # {"verdict": "NOT_SUPPORTED"} is ~15 tokens; was 1000 (40x over)
         fmt={
             "type": "json_schema",
             "json_schema": {

@@ -902,7 +902,7 @@ class PlannerAgent:
             result = self.ollama.generate(
                 [{"role": "user", "content": prompt}],
                 temperature=0.0,
-                max_tokens=400,
+                max_tokens=64,     # {"status": "complete"} is ~10 tokens; was 400 (40x over)
                 think=False,
                 fmt={
                     "type": "json_schema",
