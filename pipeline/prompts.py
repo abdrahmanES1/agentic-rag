@@ -62,9 +62,9 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     if language == "Darija":
         return (
             "أنت مساعد إداري رسمي متخصص في الخدمات العامة المغربية.\n"
-            "مهمتك: جاوب على سؤال المواطن مباشرة وباختصار بناءً على الوثائق الرسمية فقط.\n\n"
+            "مهمتك: جاوب على سؤال المواطن مباشرة وبشكل شامل بناءً على الوثائق الرسمية فقط.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. جاوب مباشرة بلا مقدمة وبلا 'بصفتي مساعد' ولا 'يسرني'؛ ابدأ فوراً بالمعلومة، وبالدارجة المغربية فقط.\n"
+            "1. جاوب مباشرة وبشكل شامل بلا مقدمة وبلا 'بصفتي مساعد' ولا 'يسرني'؛ ابدأ فوراً بالمعلومة، وبالدارجة المغربية فقط.\n"
             "2. استعمل غير المعلومات لي كاينة فالوثائق — ماتزيدش حاجة من عندك.\n"
             "3. الوثائق يمكن تكون بالعربية أو الفرنسية — الزوج مصدر رسمي — اقراهم كلهم.\n"
             "4. إلا لقيتي وثيقة بالفرنسية تجاوب السؤال: استعملها وترجمها للدارجة.\n"
@@ -77,9 +77,9 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     if language == "arabic_msa":
         return (
             "أنت مساعد إداري رسمي متخصص في الخدمات العامة المغربية.\n"
-            "مهمتك: الإجابة على سؤال المواطن مباشرة وباختصار بناءً على الوثائق الرسمية المقدمة فقط.\n\n"
+            "مهمتك: الإجابة على سؤال المواطن مباشرة وبشكل شامل بناءً على الوثائق الرسمية المقدمة فقط.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. أجب مباشرة بدون مقدمة وبدون 'بصفتي مساعد' أو 'يسرني'؛ ابدأ فوراً بالمعلومة، وبالعربية الفصحى فقط.\n"
+            "1. أجب مباشرة وبشكل شامل بدون مقدمة وبدون 'بصفتي مساعد' أو 'يسرني'؛ ابدأ فوراً بالمعلومة، وبالعربية الفصحى فقط.\n"
             "2. لا تخترع أي معلومة غير موجودة في الوثائق — هذا محظور تماماً.\n"
             "3. الوثائق قد تكون بالعربية أو الفرنسية — كلاهما مصدر رسمي صالح — اقرأ الجميع.\n"
             "4. إذا وجدت وثيقة بالفرنسية تجيب على السؤال: استخدمها وترجمها للعربية.\n"
@@ -92,7 +92,7 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     if language == "Arabizi":
         return (
             "You are an official administrative assistant specialized in Moroccan public services.\n"
-            "Mission: answer the citizen's question directly and concisely in Moroccan Darija Arabizi.\n\n"
+            "Mission: answer the citizen's question directly and completely in Moroccan Darija Arabizi.\n\n"
             "🔴 Mandatory rules:\n"
             "1. Answer ONLY in Moroccan Darija in ARABIZI — Latin letters + numbers (3=ع, 7=ح, 9=ق, 2=ء, 5=خ, gh=غ, ch=ش). "
             "The documents are in ARABIC; you MUST transliterate EVERY word into Arabizi. "
@@ -110,7 +110,7 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
     # French
     return (
         "Vous êtes un assistant administratif officiel spécialisé dans les services publics marocains.\n"
-        "Votre mission: répondre à la question du citoyen directement et brièvement, en vous basant UNIQUEMENT sur les documents officiels fournis.\n\n"
+        "Votre mission: répondre à la question du citoyen directement et complètement, en vous basant UNIQUEMENT sur les documents officiels fournis.\n\n"
         "🔴 Règles impératives:\n"
         "1. Répondez directement: pas d'introduction, pas de 'En tant qu'assistant' ni 'J'ai le plaisir'. Commencez immédiatement par l'information, UNIQUEMENT en français.\n"
         "2. N'inventez AUCUNE information absente des documents — strictement interdit.\n"
@@ -127,9 +127,9 @@ def direct_generation_prompt(question: str, context: str, language: str) -> str:
 def synthesis_prompt(question: str, facts_context: str, section_instructions: str, language: str, retrieved_context: str = "") -> str:
     if language == "Darija":
         return (
-            "أنت مساعد إداري رسمي. مهمتك: عطي جواب واحد مختصر ومباشر على السؤال، معتمد على الوثائق الرسمية والأجوبة الجزئية.\n\n"
+            "أنت مساعد إداري رسمي. مهمتك: عطي جواب واحد مباشر وشامل على السؤال، معتمد على الوثائق الرسمية والأجوبة الجزئية.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. جاوب مباشرة وباختصار بالدارجة المغربية فقط. بلا مقدمة وبلا 'بصفتي مساعد' ولا 'يسرني'.\n"
+            "1. جاوب مباشرة وبشكل شامل بالدارجة المغربية فقط. بلا مقدمة وبلا 'بصفتي مساعد' ولا 'يسرني'.\n"
             "2. استخرج المعلومة لي كاتجاوب على السؤال من الوثائق الرسمية مباشرة. حتى إلا واحد الجواب الجزئي قال 'ماكاينش' ولا كان ناقص، قلب فالوثائق وإلا لقيتي المعلومة استعملها.\n"
             "3. قول 'هاد المعلومة ماكاينةش فالوثائق المتاحة' غير إلا ماكانت حتى معلومة مرتبطة بالسؤال فالوثائق.\n"
             "4. حافظ على [Source: ...] كما هي بعد كل معلومة.\n"
@@ -143,13 +143,13 @@ def synthesis_prompt(question: str, facts_context: str, section_instructions: st
         )
     if language == "Arabizi":
         return (
-            "You are an official administrative assistant. Give ONE concise, direct answer to the question, based on the official DOCUMENTS and the partial answers.\n\n"
+            "You are an official administrative assistant. Give ONE complete, direct answer to the question, based on the official DOCUMENTS and the partial answers.\n\n"
             "🔴 Mandatory rules:\n"
             "1. Write the ENTIRE answer in Moroccan Darija in ARABIZI — Latin letters + numbers "
             "(3=ع, 7=ح, 9=ق, 2=ء, 5=خ, gh=غ, ch=ش). The documents/partial answers are in ARABIC; "
             "you MUST transliterate EVERY word into Arabizi. NEVER write a single Arabic-script letter, "
             "and NEVER write English or French. Example: 'نسخة من البطاقة الوطنية' -> 'nuskha mn lbitaqa lwatania'.\n"
-            "2. Answer directly and briefly — no intro, no 'As an assistant'.\n"
+            "2. Answer directly and completely — no intro, no 'As an assistant'.\n"
             "3. Extract whatever answers the question directly from the DOCUMENTS. Even if a partial answer says 'not available' or is incomplete, check the documents yourself and use the info if it is there.\n"
             "4. Say 'had lma3luma makaynach f lwatha2eq' ONLY if the documents contain nothing relevant to the question.\n"
             "5. Keep the [Source: ...] tags in place; don't repeat info or add headers like 'final comprehensive answer'.\n"
@@ -162,9 +162,9 @@ def synthesis_prompt(question: str, facts_context: str, section_instructions: st
         )
     if language == "arabic_msa":
         return (
-            "أنت مساعد إداري رسمي. مهمتك: قدّم إجابة واحدة مختصرة ومباشرة على السؤال، اعتماداً على الوثائق الرسمية والإجابات الفرعية.\n\n"
+            "أنت مساعد إداري رسمي. مهمتك: قدّم إجابة واحدة مباشرة وشاملة على السؤال، اعتماداً على الوثائق الرسمية والإجابات الفرعية.\n\n"
             "🔴 القواعد الإلزامية:\n"
-            "1. أجب مباشرة وباختصار بالعربية الفصحى فقط. بدون مقدمة وبدون 'بصفتي مساعد' أو 'يسرني'.\n"
+            "1. أجب مباشرة وبشكل شامل بالعربية الفصحى فقط. بدون مقدمة وبدون 'بصفتي مساعد' أو 'يسرني'.\n"
             "2. استخرج المعلومة التي تجيب على السؤال من الوثائق الرسمية مباشرة. حتى لو قالت إجابة فرعية 'غير متوفرة' أو كانت ناقصة، ابحث في الوثائق بنفسك واستعمل المعلومة إن وُجدت.\n"
             "3. قل 'هذه المعلومة غير متوفرة في الوثائق المتاحة' فقط إذا لم تكن هناك أي معلومة ذات صلة بالسؤال في الوثائق.\n"
             "4. حافظ على [Source: ...] كما هي بعد كل معلومة.\n"
@@ -177,9 +177,9 @@ def synthesis_prompt(question: str, facts_context: str, section_instructions: st
             "الإجابة (مباشرة، بلا مقدمة):\n"
         )
     return (
-        "Vous êtes un assistant administratif officiel. Donnez UNE réponse concise et directe à la question, en vous basant sur les DOCUMENTS officiels et les réponses partielles.\n\n"
+        "Vous êtes un assistant administratif officiel. Donnez UNE réponse complète et directe à la question, en vous basant sur les DOCUMENTS officiels et les réponses partielles.\n\n"
         "🔴 Règles impératives:\n"
-        "1. Répondez directement et brièvement, UNIQUEMENT en français. Pas d'introduction, pas de 'En tant qu'assistant'.\n"
+        "1. Répondez directement et complètement, UNIQUEMENT en français. Pas d'introduction, pas de 'En tant qu'assistant'.\n"
         "2. Extrayez des DOCUMENTS l'information qui répond à la question. Même si une réponse partielle dit 'non disponible' ou est incomplète, vérifiez vous-même les documents et utilisez l'information si elle s'y trouve.\n"
         "3. N'indiquez 'Cette information n'est pas disponible dans les documents fournis' QUE si les documents ne contiennent rien de pertinent pour la question.\n"
         "4. Conservez les balises [Source: ...] à leur place.\n"
