@@ -260,6 +260,7 @@ class ExecutionTrace:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "agent_path": self.agent_path,
             "plan": self.plan,
             "tool_calls": [tc.to_dict() for tc in self.tool_calls],
             "all_contexts": self.all_contexts,
