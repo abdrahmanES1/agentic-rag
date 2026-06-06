@@ -69,8 +69,13 @@ class Settings(BaseSettings):
     outscope_score_threshold: float = Field(default=0.002)
     # CrossEncoder reranker score below which retrieval is treated as out-of-scope
     # (no chunk actually answers the query). Better signal than the RRF rank for
-    # topically-related-but-unanswerable questions. Calibrate against the abstain set.
-    outscope_reranker_threshold: float = Field(default=0.0)
+    # topically-related-but-unanswerable questions.
+    # Calibrated on 124-item testset (15 OOS, 109 answerable):
+    #   threshold=0.12 → catches 8/15 OOS with 0/109 false-abstains (precision=1.0)
+    #   threshold=0.25 → catches 8/15 OOS with 3/109 false-abstains
+    # 6/15 OOS score >0.5 (look identical to answerable questions) — handled by
+    # prompt-based abstention ("غير متوفرة في الوثائق"). Keep at 0.12 (safe).
+    outscope_reranker_threshold: float = Field(default=0.12)
     dense_min_score_unified: float = Field(default=0.20)
     dense_min_score_per_lang: float = Field(default=0.25)
 
