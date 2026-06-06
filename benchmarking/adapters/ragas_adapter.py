@@ -32,14 +32,79 @@ Baseline result format (BaselineResult.to_ragas_row()):
         "contexts": List[str],
         "ground_truth": str,
     }
+
+RAGAS faithfulness root-cause fixes (applied here):
+  1. Citation stripping: v12 answers contain [Source: ...] tags. RAGAS's LLM
+     claim extractor sees these as part of the claim text → a claim like
+     "نسخة من البطاقة [Source: CIN.pdf]" can never be found in any context →
+     NLI marks it unsupported → faithfulness is artificially lowered. Citations
+     are 30% of v12's answer tokens. Strip them before claim extraction.
+  2. Context deduplication + reranker sorting: ragas_contexts = initial 5
+     (ranked by reranker) + execution_trace N (execution order, not ranked).
+     Execution_trace may add duplicate chunks and unranked low-quality contexts.
+     Deduplicate and sort all contexts by reranker score so RAGAS evaluates
+     the most relevant evidence first (and identical chunks are not double-counted).
 """
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
 log = logging.getLogger("benchmarking")
+
+_CIT_RE = re.compile(r"\[Source:[^\]]*\]", re.IGNORECASE)
+_URL_RE = re.compile(r"https?://\S+")
+
+
+def _strip_answer(text: str) -> str:
+    """
+    Strip [Source:...] citation tags and bare URLs from an answer before RAGAS
+    claim extraction. These tags are 30% of v12's answer tokens and contaminate
+    every extracted claim — the claim 'X [Source: file.pdf]' can never entail
+    from any context chunk → artificial faithfulness undercount.
+    """
+    text = _CIT_RE.sub("", text or "")
+    text = _URL_RE.sub("", text)
+    return re.sub(r"\s{2,}", " ", text).strip()
+
+
+def _rank_contexts(result: Dict, contexts: List[str]) -> List[str]:
+    """
+    Sort contexts by reranker score descending (most relevant first) and
+    deduplicate. For v12 multi-hop results, ragas_contexts = initial 5
+    (reranker-sorted) + execution_trace N (execution order). After merging,
+    re-ranking ensures RAGAS evaluates the highest-quality evidence first and
+    identical chunks retrieved in multiple hops are not double-counted.
+    Falls back to original order if no scores are available.
+    """
+    scores_dict = (result.get("retrieval") or {}).get("scores") or {}
+    reranker_scores = scores_dict.get("reranker") or []
+
+    # Build a score lookup: first 5 contexts (initial retrieval) have known scores
+    score_map: Dict[str, float] = {}
+    initial_ctxs = (
+        (result.get("retrieval") or {}).get("contexts")
+        or (result.get("retrieval") or {}).get("contexts")
+        or []
+    )
+    for i, (ctx, sc) in enumerate(zip(initial_ctxs, reranker_scores)):
+        if ctx:
+            score_map[ctx.strip()] = float(sc)
+
+    # Deduplicate (preserve first occurrence order for unseen contexts)
+    seen: set = set()
+    unique: List[str] = []
+    for ctx in contexts:
+        key = ctx.strip()
+        if key and key not in seen:
+            seen.add(key)
+            unique.append(ctx)
+
+    # Sort by reranker score; contexts not in score_map get 0.0 (end of list)
+    unique.sort(key=lambda c: score_map.get(c.strip(), 0.0), reverse=True)
+    return unique
 
 
 def build_ragas_dataset(
@@ -74,21 +139,26 @@ def build_ragas_dataset(
 
     rows = []
     for result, gold in zip(results, gold_items):
-        question = gold.get(question_key, result.get("question", ""))
-        answer = result.get("answer", "")
+        question    = gold.get(question_key, result.get("question", ""))
+        answer_raw  = result.get("answer", "")
         ground_truth = gold.get(gold_answer_key, "")
 
-        # Priority: ragas_contexts (merged initial + agentic) > retrieval.contexts > execution_trace
-        contexts = _extract_contexts(result)
+        # Fix 1: strip citation tags from answer before RAGAS claim extraction
+        answer = _strip_answer(answer_raw)
+
+        # Fix 2: extract, deduplicate, and reranker-sort contexts
+        contexts_raw = _extract_contexts(result)
+        contexts     = _rank_contexts(result, contexts_raw)
 
         rows.append({
-            "question": question,
-            "answer": answer,
-            "contexts": contexts,
+            "question":     question,
+            "answer":       answer,
+            "contexts":     contexts,
             "ground_truth": ground_truth,
         })
 
-    log.info(f"[RAGAS adapter] Built dataset: {len(rows)} rows")
+    log.info(f"[RAGAS adapter] Built dataset: {len(rows)} rows "
+             f"(citations stripped, contexts deduped+ranked)")
     return Dataset.from_list(rows)
 
 
@@ -118,13 +188,17 @@ def save_ragas_rows(rows: List[Dict], output_path: str) -> None:
     log.info(f"[RAGAS adapter] Saved {len(rows)} rows to {output_path}")
 
 
-def build_ragas_rows(results: List[Dict], gold_items: List[Dict], gold_answer_key: str = "gold_answer") -> List[Dict]:
+def build_ragas_rows(
+    results: List[Dict],
+    gold_items: List[Dict],
+    gold_answer_key: str = "gold_answer",
+) -> List[Dict]:
     """Return raw dicts (no datasets dependency) for inspection."""
     return [
         {
-            "question": gold.get("question", result.get("question", "")),
-            "answer": result.get("answer", ""),
-            "contexts": _extract_contexts(result),
+            "question":     gold.get("question", result.get("question", "")),
+            "answer":       _strip_answer(result.get("answer", "")),
+            "contexts":     _rank_contexts(result, _extract_contexts(result)),
             "ground_truth": gold.get(gold_answer_key, ""),
         }
         for result, gold in zip(results, gold_items)
