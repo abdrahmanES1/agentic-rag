@@ -63,7 +63,7 @@
     "id": "D01",
     "category": "DARIJA",
     "language": "Darija",
-    "question": "واش خاصني نعرف المدة ديال تصفية الإيراد العمري الدائم، وشنو الثمن اللي غادي يخرج عليا باش ندير هاد الإجراء؟",
+    "question": "اشنو المدة ديال تصفية الإيراد العمري الدائم، وشنو الثمن اللي غادي يخرج ليا باش ندير هاد الإجراء؟",
     "gold_answer": "خاص يتم التصفية في أجل 30 يوما من تاريخ التوصل بشهادة الشفاء أو 30 يوما من تاريخ التوصل بمحضر الصلح الموقع من طرف المعني بالأمر، والتكلفة هي بالمجان.",
     "gold_keywords": [
       "30 يوما",
@@ -94,7 +94,7 @@
     "id": "A01",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "chno hia lwaqt li kaykhassni bach itsaffa l'irad l'3omri d-da2im, w chno taklfa dyal had l'ijra2?",
+    "question": "chno howa lwaqt li kaykhassni bach itsaffa l'irad l'3omri d-da2im, w chno taklfa dyal had l'ijra2?",
     "gold_answer": "khass tetm tasfiya f ajal 30 youm mn tarikh tawassol b chahadat chchifa2 wla 30 youm mn tarikh tawassol b mahdar ssol7 lmwaqqa3 mn taraf lma3ni b l2amr, w taklfa hiya b lmajjan.",
     "gold_keywords": [
       "30 youm",
@@ -244,7 +244,7 @@
     "id": "D02",
     "category": "DARIJA",
     "language": "Darija",
-    "question": "شنو هي الوراق اللي خاصني، وكم كيكلف، وشحال المدة باش ناخد رخصة ندير حملات إعلامية فالمؤسسات التعليمية؟",
+    "question": "شنو هي الوراق اللي خاصني، وكم كيكلف، وشحال المدة باش ناخد رخصة حملات إعلامية فالمؤسسات التعليمية؟",
     "gold_answer": "خاصك تقدم: 1. تقديم طلب في الموضوع و 2. اتفاقية الشراكة. التكلفة هي بالمجان، والمدة ديالها هي 30 يوما.",
     "gold_keywords": [
       "تقديم طلب في الموضوع",
@@ -275,7 +275,7 @@
     "id": "A02",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3tik chno hia lwaraq li khasni, w ch7al katkallef, w ch7al lwaqt bach njib rokhsa ndir 7amla i3lamiya f lmou2assasat tta3limiya?",
+    "question": "Ach homa lwaraq li khasni, w ch7al katkallef, w ch7al lwaqt bach njib rokhsa ndir 7amla i3lamiya f lmou2assasat tta3limiya?",
     "gold_answer": "Khassek tqaddem: 1. talab f lmawdou3 w 2. ittifaqiyat charaka. Taklfa hiya b lmajjan, w lmoda dyalha hiya 30 youm.",
     "gold_keywords": [
       "talab f lmawdou3",
@@ -426,7 +426,7 @@
     "id": "D03",
     "category": "DARIJA",
     "language": "Darija",
-    "question": "شنو هي الوراق اللي خاصني باش نجيب شهادة على المبالغ المقتطعة من المعاش، وواش كاين شي مصاريف ولا شحال الوقت؟",
+    "question": "شنو هي الوراق اللي خاصني باش نجيب شهادة على المبالغ المقتطعة من المعاش، وواش كاين شي مصاريف و شحال الوقت؟",
     "gold_answer": "الوراق اللي خاصك هوما: 1. نسخة من البطاقة الوطنية و 2. وكالة فحالة ما حضرش المعني بالأمر. الثمن: بالمجان. المدة: فورا منين تجي بنفسك، ولا يومين (2) إلا وصل الطلب عبر القنوات الأخرى.",
     "gold_keywords": [
       "نسخة من البطاقة الوطنية",
@@ -457,7 +457,7 @@
     "id": "A03",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'chno bach njib chahada 3la lmabaligh lm9atta3a mn lma3ach, w chno hia taklfa w lwaqt?",
+    "question": "Achno khassni bach njib chahada 3la lmabaligh lm9atta3a mn lma3ach, w chno hia taklfa w lwaqt?",
     "gold_answer": "lwata2i9 lmatluba homa: 1. noskha mn lbitaqa lwataniya w 2. wakala f 7alat 3adam 7odour lma3ni b l2amr. taklfa: b lmajjan. lmoda: fawran mnin tji b nafsek, wla youmayn (2) ila wsal talab 3bar l9anawat lokhrin.",
     "gold_keywords": [
       "noskha mn lbitaqa lwataniya",
@@ -635,7 +635,7 @@
     "id": "A04",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nkhdem chi lwaraq bach njib tarkhis lziyara lmawaqi3 l2athariya l groupe d'étudiants, w chno huma ljihat lmas2oula 3la had chi?",
+    "question": "achno homa lwaraq li khasin bach njib tarkhis lziyara lmawaqi3 l2athariya l groupe d'étudiants, w chno huma ljihat lmas2oula 3la had chi?",
     "gold_answer": "khass ra2is lmajmou3a ywajjeh talab maktoub fih 3adad ttalaba li baghyin yzouro mawqi3 athari mu3ayyan w tarikh zziyara, mrfou9 b noskha mn lbitaqa dyal ttalib l koll fard mn lmajmou3a. ljihat lmas2oula huma lmudiriyat l2iqlimiya l ttaqafa, w lmudiriyat ljihawiya l ttaqafa.",
     "gold_keywords": [
       "ra2is lmajmou3a",
@@ -787,7 +787,7 @@
     "id": "A05",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3tik chno hia lwaraq li khasni bach njib rokhsat taswir programme televizyon, w chno taman dyalha w lwaqt dyalha?",
+    "question": "ach chno hia lwaraq li khasni bach njib rokhsat taswir programme televizyon, w chno taman dyalha w lwaqt dyalha?",
     "gold_answer": "khassek tqaddem: 1. istimara dyal talab rokhsat ttaswir fiha ga3 lma3lumat w mwaqq3a w makhtuma 7sab listimara nnamudajiya f lmol7a9 ra9m 2; 2. lfikra lmfassla b l3arabiya wla lfaransiya. taman howa b lmajjan, w lmoda hiya 20 youm.",
     "gold_keywords": [
       "istimara dyal talab rokhsat ttaswir",
@@ -968,7 +968,7 @@
     "id": "A06",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni njib lwaraq chno bach njib rokhsat taswir televizyon lwa9i3 f lmaghrib, w chno howa taman dyalha l2osbou3i?",
+    "question": "ach lwaraq li khassni bach njib rokhsat taswir televizyon lwa9i3 f lmaghrib, w chno howa taman dyalha l2osbou3i?",
     "gold_answer": "bach takhod rokhsat taswir televizyon lwa9i3 / l2intaj wla l2intaj lmochtarak lmaghribiya, khassek tqaddem: 1. istimara dyal talab rokhsat ttaswir fiha ga3 lma3lumat w mwaqq3a w makhtuma 7sab listimara nnamudajiya f lmol7a9 ra9m 1; 2. lfikra lmfassla b l3arabiya wla lfaransiya; 3. noskha kamla mn l3a9d m3a 9anat lbatt; 4. tboutiyat l2ada2. taklfa hiya 1500 dirham l l2osbou3 bla 7tisab rrosoum.",
     "gold_keywords": [
       "istimara dyal talab rokhsat ttaswir",
@@ -1147,7 +1147,7 @@
     "id": "A07",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'chi waraq bach njib chahadat raf3 lyad 3la ddamana lbankiya, w chno hia taklfa w ch7al lmoda?",
+    "question": "chno homa lwraq li khassni  bach nched chahadat raf3 lyad 3la ddamana lbankiya, w chno hia taklfa w ch7al lmoda?",
     "gold_answer": "lwatika lmatluba hiya: 1. talab l7osoul 3la chahadat raf3 lyad 3la ddamana lbankiya. taklfa: b lmajjan. lmoda: 5 iyyam.",
     "gold_keywords": [
       "talab l7osoul 3la chahadat raf3 lyad 3la ddamana lbankiya",
@@ -1299,7 +1299,7 @@
     "id": "A08",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hiya lwaraq li khasni bach njib qarar lmwafaqa ttiqniya l'istirad fhoul l2abqar mn ssoulalat l2asila, w chno hia taklfa w lmoda dyal had chi?",
+    "question": "ach  chno hiya lwaraq li khasni bach nched qarar lmwafaqa ttiqniya l'istirad fhoul l2abqar mn ssoulalat l2asila, w chno hia taklfa w lmoda dyal had chi?",
     "gold_answer": "bach takhod l9arar, khassek tqaddem: 1. talab l2istirad 2. rokhsat istabl l7ajr ss7i li tahaddad taa9a listi3abiya 3. liltizam b i7tiram chchorot lm7addada f daftar tta7ammolat 4. la2i7at lmostafidin mn 3amaliyat l2istirad ssab9a 5. ssijill ttijari bnnisba l charikat wla l9anoun l2asasi bnnisba l ta3awoniyat w jam3iyat morabbi lmachiya 6. wata2i9 nnasab. taklfa: b lmajjan, w lmoda: 15 youm.",
     "gold_keywords": [
       "talab l2istirad",
@@ -1573,7 +1573,7 @@
     "id": "A10",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni njib chi waraq bach njib nadir chahada tibbiya l lwafat mn les hôpitaux, w wach kayn chi taklfa w ch7al lwaqt?",
+    "question": "chno hiya waraq li khassni bach nadir chahada tibbiya l lwafat mn les hôpitaux, w wach kayn chi taklfa w ch7al lwaqt?",
     "gold_answer": "khassek tjib: 1. talab nadir chahada tibbiya l lwafat. 2. noskha mn lbitaqa lwataniya l tta3rif dyal sa7ib talab wla lwata2i9 lbadila 7sab l7ala. taklfa hiya b lmajjan, w lmoda zzamaniya hiya 7 iyyam.",
     "gold_keywords": [
       "talab nadir chahada tibbiya l lwafat",
@@ -1696,7 +1696,7 @@
     "id": "A11",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni njib lwaraq achmen 7wayej bach njib nadir chahada tibbiya l lwafat mn lmostachfayat ljami3iya, w wach kayn chi taklfa wla ch7al lmoda?",
+    "question": "ach hiya lwraq li khassni njib bach nakhod nadir chahada tibbiya l lwafat mn lmostachfayat ljami3iya, w wach kayn chi taklfa wla ch7al lmoda?",
     "gold_answer": "khassek tjib: 1. istimara dyal talab nadir chahada tibbiya l lwafat, 2. noskha mn lbitaqa lwataniya l tta3rif dyal sa7ib talab, w 3. watika tatbet silat l9araba m3a chakhs lmotawaffa 3ind li9tida2. taklfa hiya b lmajjan w lmoda hiya 15 youm.",
     "gold_keywords": [
       "istimara dyal talab nadir chahada tibbiya l lwafat",
@@ -1999,7 +1999,7 @@
     "id": "A13",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq bach ndmej tlamid maghribi wla ajnabi wafdin mn lkharej f lmadrasa, w chno taklif w ch7al lwaqt?",
+    "question": "achno lwaraq li khassni njib bach ndmej tlamid maghribi wla ajnabi wafdin mn lkharej f lmadrasa, w chno taklif w ch7al lwaqt?",
     "gold_answer": "lwata2i9 lmatluba hiya: 1. talab maktoub 2. chahada madrasiya wla watika l2itbat 3. wata2i9 itbat lhawiya wla tasri7 b chcharaf. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "talab maktoub",
@@ -2123,7 +2123,7 @@
     "id": "A14",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach njib idn lwlouj l lmolk lghabawi, w ch7al kaykallef w ch7al lwaqt?",
+    "question": "chno hia lwaraq li khasni bach njib idn lwlouj l lmolk lghabawi, w ch7al kaykallef w ch7al lwaqt?",
     "gold_answer": "khassek tqaddem: 1. talab l7osoul 3la idn lwlouj l lmolk lghabawi mn ajl ttaswir wla tandim nachat taqafi wla riyadi, 2. noskha mn rokhsat ttaswir, 3. noskha mn rokhsat ttaswir msallma mn taraf ssoultat lmokhtassa f 7alat isti3mal tayyarat ddron l ttaswir, 4. noskha mn ich3ar ssoultat lma3niya, w 5. liltizam b lmo7afada 3la lmajal lghabawi (tasri7 b chcharaf). taklfa: b lmajjan. lmoda: 20 youm.",
     "gold_keywords": [
       "b lmajjan",
@@ -2279,7 +2279,7 @@
     "id": "A15",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nwajjed chno hia lwaraq li khasni, w chno howa taklfa w lwaqt dyal ittifaqiyat charaka bin lmou2assasat tta3limiya w chchoraka2?",
+    "question": "chno hia lwaraq li khasni, w chno howa taklfa w lwaqt dyal ittifaqiyat charaka bin lmou2assasat tta3limiya w chchoraka2?",
     "gold_answer": "lwata2i9 lmatluba l ittifaqiyat charaka hiya: 1. l9anoun l2asasi 2. la2i7at l2a3da2 3. mahdar ljam3 l3am 4. wasl li2da3 nniha2i w 5. bitaqa tiqniya 7awl ahdaf charaka. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "l9anoun l2asasi",
@@ -2639,7 +2639,7 @@
     "id": "A16",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach njib rokhsat li7tilal lmo2aqqat lmolk l3am bla bina, w chno hiya taklfa w lmoda?",
+    "question": "chno hia lwaraq li khasni bach njib rokhsat li7tilal lmo2aqqat lmolk l3am bla bina, w chno hiya taklfa w lmoda?",
     "gold_answer": "khassek tqaddem wata2i9 b7al: noskha mn lbitaqa lwataniya l tta3rif wla jawaz ssafar, w swar l lmaw9i3, w chahadat li2sti9rar w ssalaba msallma mn 9ibal maktab dirasat mo3tamad. taklfa hiya rrasm lmosta7a99 3la rokhsat li7tilal lmo2aqqat l lmolk l3am ljama3i bla i9amat bina 7sab l9ima lm7addada f l9arar ljiba2i bnnisba l koll rokhsa. w lmoda dyal l7osoul 3la rokhsa hiya dakhil ajal 30 youm.",
     "gold_keywords": [
       "lbitaqa lwataniya l tta3rif wla jawaz ssafar",
@@ -2848,7 +2848,7 @@
     "id": "A17",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach njib rokhsat lmocharaka f lma3arid, w chno hiya lmoda?",
+    "question": "chno hia lwaraq li khasni bach njib rokhsat lmocharaka f lma3arid, w chno hiya lmoda?",
     "gold_answer": "Khassek tjib joj wata2i9: 1. istimara ttasjil w 2. noskha mn lwatika lmotbita l daf3 mablagh lmosahama. w lmoda li m7addda hiya 20 youm.",
     "gold_keywords": [
       "istimara ttasjil",
@@ -2997,7 +2997,7 @@
     "id": "A18",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'chi waraq bach nsajjel qabli f a9sam ta7dir chahadat ttaqni l3ali, w chno hia lkost w lwaqt?",
+    "question": "achno lwraq li khassni  bach ndir ttasjil qabli f a9sam ta7dir chahadat ttaqni l3ali, w chno hia lkost w lwaqt?",
     "gold_answer": "lwatika lmatluba hiya: 1. wasl ttasjil. taklfa dyal l2ijra2 hiya b lmajjan, w lmoda zzamaniya hiya 60 youm.",
     "gold_keywords": [
       "wasl ttasjil",
@@ -3146,7 +3146,7 @@
     "id": "A19",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'chi waraq, w ch7al kaytsehhel, w ch7al lwaqt bach njib tawjih dyal masarat lbakaloria lmihaniya?",
+    "question": "chno lwraq li khassni , w ch7al lwaqt bach njib tawjih dyal masarat lbakaloria lmihaniya?",
     "gold_answer": "khassek tjib watika wa7da w hiya: bitaqa i3adat ttawjih. had l2ijra2 b lmajjan, w lmoda lm7addada hiya 60 youm.",
     "gold_keywords": [
       "bitaqa i3adat ttawjih",
@@ -3298,7 +3298,7 @@
     "id": "A20",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'chno bach njib chahadat lma3ach mn ssandou9 lmaghribi l ttaqa3od, w chno hia taklfa w lwaqt?",
+    "question": "achno khassni bach njib chahadat lma3ach mn ssandou9 lmaghribi l ttaqa3od, w chno hia taklfa w lwaqt?",
     "gold_answer": "Khassek tjib: 1. noskha mn lbitaqa lwataniya, w 2. wakala f 7alat ma kontich 7adir. taklfa hiya b lmajjan. w lmoda imma fawran mnin tji b nafsek, wla youmayn (2) ila wsal talab 3bar l9anawat lokhrin.",
     "gold_keywords": [
       "noskha mn lbitaqa lwataniya",
@@ -3505,7 +3505,7 @@
     "id": "A21",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq achmen 7wayej bach njib jwaz safar biometrique, w chno lkost w lwaqt?",
+    "question": "achno lwaraq li khassni bach njib jwaz safar biometrique, w chno lkost w lwaqt?",
     "gold_answer": "bach tjib jwaz ssafar lbiometri, khassek tqaddem: 1. istimara dyal talab l7osoul 3la jwaz ssafar lbiometri, lmotawaffra 3la bawwabat wizarat ddakhiliya www.passeport.ma, m3abbya w mwaqq3a w mo2arrakha mn taraf sa7ib talab. 2. ttambr l2iliktroni bach tkemmel listimara w bach tbarrer daf3 wajibat ttambr. 3. noskha mn lbitaqa lwataniya l tta3rif l2iliktroniya sariyat ssala7iya, w sora fotoghrafiya l tta3rif 7aditha (7ajm 35x45 mm). taman howa: 500 dirham, w lmoda hiya: 15 youm.",
     "gold_keywords": [
       "500 dirham",
@@ -3686,7 +3686,7 @@
     "id": "A22",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni njib ay documents bach njib rokhsat nasb llaw7at l2ich-hariya, w chno hia lmoda dyal had l2ijra2?",
+    "question": "ach khassni njib mn documents bach njib rokhsat nasb llaw7at l2ich-hariya, w chno hia lmoda dyal had l2ijra2?",
     "gold_answer": "lwata2i9 lmatluba hiya: 1. talab rokhsat li7tilal lmo2aqqat l lmolk l3omoumi, 2. ttasamim, 3. tasmim maw9i3i li y7addad 3la kharita monasiba maw9i3 llaw7a lli bghiti tnseb, 4. tasmim llaw7a lli bghiti tnseb b mi9yas li ybayyen ab3adha, w 5. wasl ada2 mosta7a99at dirasat lmalaff. lmoda hiya 60 youm.",
     "gold_keywords": [
       "talab rokhsat li7tilal lmo2aqqat l lmolk l3omoumi",
@@ -3838,7 +3838,7 @@
     "id": "A23",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'chno bach njib chahadat l2inkhirat, w chno hia taklfa w lwaqt?",
+    "question": "ach khassni njib bach nched chahadat l2inkhirat, w chno hia taklfa w lwaqt?",
     "gold_answer": "khassek tjib: 1. noskha mn lbitaqa lwataniya w 2. wakala f 7alat 3adam 7odour lma3ni b l2amr. taklfa hiya b lmajjan, w lmoda dyal l7osoul 3liha hiya youmayn (2). ljiha lmas2oula hiya ssandou9 lmaghribi l ttaqa3od.",
     "gold_keywords": [
       "noskha mn lbitaqa lwataniya",
@@ -3988,7 +3988,7 @@
     "id": "A24",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni njib lwaraq chno hia lkost w ch7al lwaqt bach njib attestation de concordance?",
+    "question": "achemen  lwaraq khassni njib w chno hia lcost w ch7al lwaqt bach njib attestation de concordance?",
     "gold_answer": "bach tjib chahadat lmotaba9a, khassek tqaddem: 1. machrou3 chahada mo2achchar 3lih mn taraf l9onsol lmaghribi l ma7al ssokna. 2. nosakh mn lwata2i9 lmotbita l lhawiya l9adima. 3. nosakh mn lwata2i9 lmotbita l lhawiya jjadida. taklfa hiya b lmajjan w lmoda youm wa7id.",
     "gold_keywords": [
       "machrou3 chahada mo2achchar 3lih mn taraf l9onsol lmaghribi l ma7al ssokna",
@@ -4384,7 +4384,7 @@
     "id": "A26",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach njib dda3m ljaza2i dyal ssukkar, w chno hiya lwaqt w taklfa?",
+    "question": "achno hia lwaraq li khasni bach njib dda3m ljaza2i dyal ssukkar, w chno hiya lwaqt w taklfa?",
     "gold_answer": "bach takhod dda3m ljaza2i l fa2idat maddat ssukkar, khassek tqaddem: 1. talab listifada mn da3m ssukkar 3la lmabi3at lma7alliya 2. bayan tafsili l lmabi3at lma7alliya lmostafida mn dda3m 3. war9a tafsiliya l lmabi3at chchahriya m3a i7tisab mo3addal ddariba 3la l9ima lmodafa l koll lmabi3at, w ghirha dyal lwata2i9. taklfa b lmajjan, w lmoda hiya 15 youm.",
     "gold_keywords": [
       "talab listifada mn da3m ssukkar 3la lmabi3at lma7alliya",
@@ -4537,7 +4537,7 @@
     "id": "A27",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach nsadde9 3la 3a9d charaka bin makawilat naql maghribiya w isbaniya, w chno lwaqt w lkost?",
+    "question": "chno hia lwaraq li khasni bach nsadde9 3la 3a9d charaka bin makawilat naql maghribiya w isbaniya, w chno lwaqt w lkost?",
     "gold_answer": "bach tsadde9 3la 3oqoud ittifaq charaka lmobrama bin moqawalat na9liya maghribiya w isbaniya, khassek tqaddem: 1. talab sadir 3an charika maghribiya tzawel nna9l ddawli l lbada2i3 w ttawaffar 3la 7adira tatkawwan 3la l2a9all mn markaba jarra w ma9toura wla nesf ma9toura. 2. 3a9d charaka lmobram bin moqawala na9liya maghribiya w isbaniya msadda9 3lih mn taraf ssoultat lmokhtassa l2isbaniya. taklfa: b lmajjan. lmoda: 30 youm.",
     "gold_keywords": [
       "3a9d charaka lmobram bin moqawala na9liya maghribiya w isbaniya",
@@ -4628,7 +4628,7 @@
     "id": "A28",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Shno hiya taklfa w lmoda dyal tajdid tarkhis niha2i l listighlal mansha2at tantaj dyal kahraba mn masadir ttaqat lmotajaddida, w chno hiya lwizara li mas2oula 3la had l2ijra2?",
+    "question": "chno hiya taklfa w lmoda dyal tajdid tarkhis niha2i l listighlal mansha2at tantaj dyal kahraba mn masadir ttaqat lmotajaddida, w chno hiya lwizara li mas2oula 3la had l2ijra2?",
     "gold_answer": "taklfa hiya b lmajjan, w lmoda hiya 30 youm. ljiha lmas2oula 3la had l2ijra2 hiya wizarat l2inti9al ttaqi w ttanmiya lmostadama - 9ita3 l2inti9al ttaqi.",
     "gold_keywords": [
       "b lmajjan",
@@ -4809,7 +4809,7 @@
     "id": "A29",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nbaddel rra9m dyal l7sab lbanki 3and CNSS? Chno hiya lwaraq li khasni, w chno taman w chno mdda?",
+    "question": "achno khassni ndir bach nbaddel rra9m dyal l7sab lbanki 3and CNSS? Chno hiya lwaraq li khasni, w chno taman w chno mdda?",
     "gold_answer": "khassek tqaddem: noskha mn bitaqat ttasjil b ssandou9 w.m.7.j, noskha mn lbitaqa lwataniya l tta3rif dyal lmo2amman, w chik asli mchattab 3lih wla chahada bankiya asliya l l7sab lbanki. taklfa b lmajjan w lmoda hiya 30 youm.",
     "gold_keywords": [
       "noskha mn bitaqat ttasjil b ssandou9 w.m.7.j",
@@ -5175,7 +5175,7 @@
     "id": "A31",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Chno hia lwaraq li khassni, w kam taman w lmoda bach nakhod tarkhis lma7ajir ss7iya lkhyoul dyal ttasdir?",
+    "question": "Chno hiya lwaraq li khassni, w kam taman w lmoda bach nakhod tarkhis lma7ajir ss7iya lkhyoul dyal ttasdir?",
     "gold_answer": "khassek tqaddem: talab tarkhis lma7jar, w 3o9dat tta2tir ss7i, w mokhattat ijmali l lma7jar. taklfa hiya 1500 dirham, w lmoda hiya 30 youm.",
     "gold_keywords": [
       "talab tarkhis lma7jar",
@@ -6470,7 +6470,7 @@
     "id": "A37",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'ash lwaraq bach nse7eb chahadat ttansi9 mn nnidam ljama3i l manh rawatib ttaqa3od, w chno taman w lmoda?",
+    "question": "achno lwaraq li khassni bach nse7eb chahadat ttansi9 mn nnidam ljama3i l manh rawatib ttaqa3od, w chno taman w lmoda?",
     "gold_answer": "bach tse7eb chahadat ttansi9 mn nnidam ljama3i l manh rawatib ttaqa3od, khassek tjib: lbitaqa lwataniya wla wakala. taklfa b lmajjan w lmoda 3la lfor.",
     "gold_keywords": [
       "lbitaqa lwataniya wla wakala",
@@ -6622,7 +6622,7 @@
     "id": "A38",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq chno hiya bach njib chahada idariya l lwilada, w ch7al katkallef w ch7al mdada dyalha?",
+    "question": "chno hiya bach njib chahada idariya l lwilada, w ch7al katkallef w ch7al mdada dyalha?",
     "gold_answer": "khassek tjib: 1. noskha mn 3a9d zzawaj 2. noskha mn lbitaqa lwataniya l tta3rif l2iliktroniya l l2ab w l2omm 3. tasri7 b chcharaf mn taraf ab lmawloud wla na2ibou 4. iltizam l9abila lli achrafat 3la 3amaliyat lwilada (tta9lidiya). taklfa: b lmajjan. lmoda: 5 iyyam.",
     "gold_keywords": [
       "3a9d zzawaj",
@@ -6775,7 +6775,7 @@
     "id": "A39",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq achmen 7aja bach njib chahadat listighlal lfila7i mn lmaktab ljihawi l listitmar lfila7i l Tadla, w chno lkost w ch7al lwaqt?",
+    "question": "achno lwaraq li khasini bach ncheds chahadat listighlal lfila7i mn lmaktab ljihawi l listitmar lfila7i l Tadla, w chno lkost w ch7al lwaqt?",
     "gold_answer": "bach takhod chahadat listighlal lfila7i, khassek tjib: 1. talab maktoub 2. noskha mn bitaqat tta3rif lwataniya 3. noskha mn bitaqat mosta3mili miyah rri 4. watika tatbet l3ala9a l9anouniya b l2ard lmostaghalla bnnisba l lfalla7in kharij lmadar ssa9awi. taklfa hiya 68,76 dirham*, w lmoda hiya 30 youm.",
     "gold_keywords": [
       "talab maktoub",
@@ -6957,7 +6957,7 @@
     "id": "A40",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni, w ch7al taman, w ch7al lwaqt bach njib chahadat li3timad ss7i l wasa2il de naql lmawadd sari3at ttalaf (dawli w watani)?",
+    "question": "chno hia lwaraq li khasni, w ch7al taman, w ch7al lwaqt bach njib chahadat li3timad ss7i l wasa2il de naql lmawadd sari3at ttalaf (dawli w watani)?",
     "gold_answer": "Khassek tqaddem: 1. talab l7osoul 3la chahadat li3timad ss7i l wasa2il na9l lmawadd sari3at ttalaf (nna9l ddawli w lwatani), w wata2i9 okhra darouriya. taman howa 500 dirham l malaff wasilat na9l wa7da (nna9l lwatani) wla 2000 dirham l malaff wasilat na9l wa7da (nna9l ddawli). lmoda hiya 60 youm.",
     "gold_keywords": [
       "talab l7osoul 3la chahadat li3timad ss7i l wasa2il na9l lmawadd sari3at ttalaf (nna9l ddawli w lwatani)",
@@ -7257,7 +7257,7 @@
     "id": "A41",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'achmen waraq bach njib chahadat ta7wil l7o9o9, w chno lkost w lwaqt?",
+    "question": "achmen waraq khasin bach njib chahadat ta7wil l7o9o9, w chno lkost w lwaqt?",
     "gold_answer": "khassek tjib: lbitaqa lwataniya wla wakala. taklfa hiya b lmajjan, w lmoda hiya 3la lfor.",
     "gold_keywords": [
       "lbitaqa lwataniya wla wakala",
@@ -7406,7 +7406,7 @@
     "id": "A42",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'ash lwaraq, w chno lkost w ch7al ghadi yakhod liya bach njib chahadat tar9im dyal khlaya nna7l?",
+    "question": "achno lwaraq khassni, w chno lkost w ch7al ghadi yakhod liya bach njib chahadat tar9im dyal khlaya nna7l?",
     "gold_answer": "lwatika lmatluba hiya: 1. chahadat momarasat tarbiyat nna7l. taklfa: b lmajjan. lmoda: 30 youm.",
     "gold_keywords": [
       "chahadat momarasat tarbiyat nna7l",
@@ -7587,7 +7587,7 @@
     "id": "A43",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq chno hiya bach njib chahadat tawjih lnisa2 w l2atfal dahaya l3onf, w ch7al tkostha w ch7al lwaqt?",
+    "question": "chno hiya lwaraq bach njib chahadat tawjih lnisa2 w l2atfal dahaya l3onf, w ch7al tkostha w ch7al lwaqt?",
     "gold_answer": "khassek tjib: 1. noskha mn bitaqat tta3rif lwataniya wla ayya watika tatbet hawiyat chakhs lma3ni b talab chahada, w 2. malaff lmosa3ada lijtima3iya 3ind li9tida2, b l2idafa l talab l7osoul 3la chahadat tawjih nnisa2 w l2atfal. taklfa hiya b lmajjan, w lmoda hiya 3 iyyam.",
     "gold_keywords": [
       "bitaqat tta3rif lwataniya",
@@ -7740,7 +7740,7 @@
     "id": "A44",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq achmen 7wayej bach njib chahadat 3adam l2ijar, w chno lkost w ch7al lwaqt?",
+    "question": "achmen lwaraq bach njib chahadat 3adam l2ijar, w chno lkost w ch7al lwaqt?",
     "gold_answer": "Khassek tjib: 1. l2ibra2 2. chahadat li7ala 3la ttaqa3od 3. noskha mn lbitaqa lwataniya l tta3rif 4. chahadat l2ojra (tatadamman ra9m tta2jir). taklfa hiya b lmajjan, w lmoda hiya youmayn.",
     "gold_keywords": [
       "l2ibra2",
@@ -7924,7 +7924,7 @@
     "id": "A45",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nkhdem ch7al mn waraq bach njib chahada madrasiya? Wach kayn chi taman w ch7al katakhod?",
+    "question": "achmen waraq khasni bach nched chahada madrasiya? Wach kayn chi taman w ch7al katakhod?",
     "gold_answer": "khassek tjib: 1. talab maktoub 2. noskha mn bitaqat tta3rif lwataniya 3. noskha mn lwatika lli tatbet lwisaya. taklfa hiya b lmajjan, w lmoda hiya youm wa7id.",
     "gold_keywords": [
       "talab maktoub",
@@ -8414,7 +8414,7 @@
     "id": "A47",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq w kamel chi 7aja bach njib lmwafaqa ss7iya dyal tasdir lkhyoul? Wach kayn chi taklifa w ch7al lwaqt?",
+    "question": "chno hia lwaraq bach njib lmwafaqa ss7iya dyal tasdir lkhyoul? Wach kayn chi taklifa w ch7al lwaqt?",
     "gold_answer": "khassek tqaddem: 1. istimara dyal talab lmwafaqa fiha ism w 3onwan lmalik w lbalad lmostawrid w 3adad lkhyoul lmwajjaha l ttasdir w 3onwan lma7jar ss7i. 2. noskha mn rokhsat lma7jar ss7i wla 3o9dat isti2jarou. 3. wata2i9 ta3rif lkhyoul. 4. 3o9dat tta2tir ss7i m3a tbib baytari khass montadab w mo3tamad l ta2tir 3amaliyat tasdir w istirad lkhyoul. taklfa: b lmajjan. lmoda: 3 iyyam.",
     "gold_keywords": [
       "istimara dyal talab lmwafaqa",
@@ -8656,7 +8656,7 @@
     "id": "A48",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq chno hiya bach njib mn mahdar qaboul chakhs mtawaffi f lmostachfayat ljihawiya w l2iqlimiya, w chno lkost w lwaqt?",
+    "question": "chno hiya lwraq li khasni bach njib mn mahdar qaboul chakhs mtawaffi f lmostachfayat ljihawiya w l2iqlimiya, w chno lkost w lwaqt?",
     "gold_answer": "khassek tjib: 1. noskha mn bitaqat tta3rif lwataniya wla watika tatbet lhawiya l sa7ib talab, 2. noskha mn bitaqat tta3rif lwataniya wla watika tatbet lhawiya l chakhs lmotawaffa, 3. watika tatbet silat l9araba m3a chakhs lmotawaffa, w 4. talab qaboul chakhs motawaffa. taklfa hiya b lmajjan, w lmoda hiya 3 iyyam.",
     "gold_keywords": [
       "bitaqat tta3rif lwataniya",
@@ -9166,7 +9166,7 @@
     "id": "A51",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Shno hiya taklifa w lmoda dyal minhat lwafa2 lmotaqa3idin lmo2minin, w chno hiya ljiha li mas2oula 3la had chi?",
+    "question": "chno hiya taklifa w lmoda dyal minhat lwafa2 lmotaqa3idin lmo2minin, w chno hiya ljiha li mas2oula 3la had chi?",
     "gold_answer": "taklfa hiya b lmajjan, w lmoda hiya 60 youm, w ljiha lmas2oula 3la had l2ijra2 hiya idarat ddifa3 lwatani.",
     "gold_keywords": [
       "b lmajjan",
@@ -9411,7 +9411,7 @@
     "id": "A53",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni chno lwaraq bach njib nadir fatoura mn centre hospitalier universitaire, w chno taman w lmoda?",
+    "question": "chno lwaraq khassni bach njib nadir fatoura mn centre hospitalier universitaire, w chno taman w lmoda?",
     "gold_answer": "Khassek tjib: 1. istimara dyal talab nadir l lfatoura 2. noskha mn bitaqat tta3rif lwataniya l sa7ib talab 3. wakala katkhawwel dawi l7o9o9 imkaniyat l7osoul 3la nadir lfatoura. taman howa b lmajjan, w lmoda dyal lkhadma hiya 7 iyyam.",
     "gold_keywords": [
       "istimara dyal talab nadir l lfatoura",
@@ -10171,7 +10171,7 @@
     "id": "A57",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq achmen chi 7aja bach njib chahadat li3tiraf b jjinsiya lmaghribiya, w chno hia taklfa w kamel lwaqt?",
+    "question": "achmen wreq khasni bach njib chahadat li3tiraf b jjinsiya lmaghribiya, w chno hia taklfa w kamel lwaqt?",
     "gold_answer": "khassek tjib: 1. lbitaqa lwataniya l tta3rif l2iliktroniya wla jwaz ssafar lbiometri, w 2. ddaftar l3a2ili wla kannach tta3rif w l7ala lmadaniya, w 3. chahadat jjinsiya lmaghribiya l l2atfal lmawloudin mn omm maghribiya w ab ajnabi. taklfa l2ijmaliya hiya 60 dirham (50 dirham l rrosoum l9onsoliya w 10 dirham l ta3rifat 3la lkhadamat (SEGMA)). w lmoda zzamaniya hiya 60 youm.",
     "gold_keywords": [
       "lbitaqa lwataniya l tta3rif l2iliktroniya wla jwaz ssafar lbiometri",
@@ -10686,7 +10686,7 @@
     "id": "A60",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3tik chno hia lwaraq li khasni, w ch7al taklfa, w ch7al lwaqt bach ndir ibda2 rra2y dyal l2i3fa2 jomroki l lmantoujat lba7riya?",
+    "question": "chno hia lwaraq li khasni, w ch7al taklfa, w ch7al lwaqt bach ndir ibda2 rra2y dyal l2i3fa2 jomroki l lmantoujat lba7riya?",
     "gold_answer": "khassek tqaddem: 1. talab l2i3fa2 ljomroki w 2. lfatoura chchakliya brouforma. taklfa hiya b lmajjan, w lmoda lm7addada hiya 30 youm.",
     "gold_keywords": [
       "talab l2i3fa2 ljomroki",
@@ -10928,7 +10928,7 @@
     "id": "A61",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nkhdem l2ibra w raf3 lyad dyal masakin ddawla, wach kayn chi documents? W fin kanqaddamha?",
+    "question": "chno khassni njib bach nched l2ibra w raf3 lyad dyal masakin ddawla, wach kayn chi documents? W fin kanqaddamha?",
     "gold_answer": "Khassek tjib: 1. talab maktoub 2. noskha mn bitaqat tta3rif lwataniya 3. chahada tfid moddat i9tita3 l2a9sat lmo2ajjala f 7alat li9tita3 lmobachar mn rratib chchahri wla bayan l2ada2 f 7alat ijra2 ta7ammol l2a9sat lmo2ajjala 3and l9abid. khassek tqaddamha l mandoubiyat amlak ddawla tta-bi3 liha l3aqar, w lmoda hiya 15 youm.",
     "gold_keywords": [
       "talab maktoub",
@@ -11619,7 +11619,7 @@
     "id": "A65",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Shno hiya taklfa w lmoda dyal l'ijaza l2ahliya l rabban ssofon fihom 7amoula ijmaliya t9ell mn 500 w katsamro nhda ssahel, w chno ahamm wata2i9 khassni nwajjed?",
+    "question": "chno hiya taklfa w lmoda dyal l'ijaza l2ahliya l rabban ssofon fihom 7amoula ijmaliya t9ell mn 500 w katsamro nhda ssahel, w chno ahamm wata2i9 khassni nwajjed?",
     "gold_answer": "taklfa hiya 500 dirham, w lmoda hiya 7 iyyam. w mn ahamm lwata2i9 lmatluba: noskha mn bitaqat tta3rif lwataniya wla jwaz ssafar bnnisba l l2ajanib, w chahadat lkafa2a f istikhdam 9awarib w tawwafat nnaja w zawari9 l2in9ad ghir zawari9 l2in9ad ssari3.",
     "gold_keywords": [
       "500 dirham",
@@ -12413,7 +12413,7 @@
     "id": "A69",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'ay lwaraq bach njib ijazat l2ahliya l dabit awwal ghir mahduda, w chno hiya taklfa w lwaqt?",
+    "question": "Wach khassni nji b'ay lwaraq bach nched ijazat l2ahliya l dabit awwal ghir mahduda, w chno hiya taklfa w lwaqt?",
     "gold_answer": "khassek tjib: talab, w sora fotoghrafiya l tta3rif 7aditha, b khalfiya bayda wla zar9a wla rmadiya, (7ajm 4.5mm x 3.5mm), w noskha mn ijaza ahliya dabit mas2oul 3an lkhafara lmila7iya ghir mo7addada wla chahada okhra mo3adila w mo3taraf biha, b l2idafa l chahadat okhra mtal noskha mn kachf l2ib7ar mo3tamad ytabbet 9iyam lmorachah b khadma ba7riya mo3tamada b sifat dabit mas2oul 3an lkhafara lmila7iya l modda la t9ell 3an itnay 3achar (12) chahr 3la matn sofon dat 7amoula ijmaliya to3adil wla tfou9 500. taklfa hiya 500 dirham w lmoda hiya 7 iyyam.",
     "gold_keywords": [
       "talab",
@@ -12744,7 +12744,7 @@
     "id": "A70",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Shno hiya taklfa w lwaqt bach nkhod l'ijaza l'ahliya l dabit mas2oul 3an lkhaffara lhandasiya, w chno huma ahamm lwata2i9 lmatluba?",
+    "question": "chno hiya taklfa w lwaqt bach nkhod l'ijaza l'ahliya l dabit mas2oul 3an lkhaffara lhandasiya, w chno huma ahamm lwata2i9 lmatluba?",
     "gold_answer": "taklfa dyal chahadat STCW hiya 500 dirham, w lmoda katkoun 7 iyyam. mn ahamm lwata2i9 lmatluba: noskha mn chahadat molazim alati mn ddaraja l2oula l lmila7a ttijariya, w chahadat tta2hil f ttakwin l2asasi f majal ssalama, w noskha mn bitaqat tta3rif lwataniya wla jwaz ssafar bnnisba l l2ajanib.",
     "gold_keywords": [
       "500 dirham",
@@ -13052,7 +13052,7 @@
     "id": "A72",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach njib ijaza tayyar, w ch7al tkostha w ch7al mdada?",
+    "question": "chno hia lwaraq li khasni bach njib ijaza tayyar, w ch7al tkostha w ch7al mdada?",
     "gold_answer": "khassek tqaddem: 1. talab maktoub mwaqqa3 mn taraf lmortafiq 2. watika itbat naja7 lma3ni f limti7an ttatbi9i w nnadari 3. sortayn chamsiyatayn l lmortafiq 4. itbat istifa2 3adad sa3at ttayaran 5. watika itbat hawiyat lmortafiq 6. mla w tawqi3 istimarat l2idara mn taraf lmortafiq. taklfa tatrawah bin LPP dirham 400 w LPL dirham 1000, w lmoda hiya 15 youm.",
     "gold_keywords": [
       "talab maktoub mwaqqa3",
@@ -13208,7 +13208,7 @@
     "id": "A73",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach njib ijaza fanni l listighlal f majal ttayaran lmadani, w chno taman w lwaqt?",
+    "question": "chno hia lwaraq li khasni bach njib ijaza fanni l listighlal f majal ttayaran lmadani, w chno taman w lwaqt?",
     "gold_answer": "khassek tjib: 1. watika itbat hawiyat lma3ni 2. talab maktoub mwaqqa3 mn taraf lmostakhdem 3. sortayn chamsiyatayn l lma3ni 4. mla w tawqi3 istimarat l2idara mn taraf lma3ni 5. watika itbat naja7 lma3ni f limti7an ttatbi9i w nnadari 6. itbat istifa2 3adad sanawat ttajriba lmatluba. taklfa hiya LATE dirham 500, w lmoda hiya 15 youm.",
     "gold_keywords": [
       "watika itbat hawiyat lma3ni",
@@ -13394,7 +13394,7 @@
     "id": "A74",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'ay lwaraq bach njib ijazat mora9ib jawwi, w chno hia taklfa w kamel lwaqt?",
+    "question": "achno lwaraq li khasni bach njib ijazat mora9ib jawwi, w chno hia taklfa w kamel lwaqt?",
     "gold_answer": "khassek tqaddem: 1. watika itbat hawiyat lmortafiq 2. sortayn chamsiyatayn l lmortafiq 3. watika itbat istifa2 likhtibarat nnadariya w l3amaliya lli ysdor biha qarar wizari. taklfa hiya b lmajjan, w lmoda dyalha hiya 30 youm.",
     "gold_keywords": [
       "watika itbat hawiyat lmortafiq",
@@ -13516,7 +13516,7 @@
     "id": "A75",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Shno hiya taklfa w lwaqt w les documents li khassni bach njib ijaza mekaniki siyanat ttayyarat?",
+    "question": "chno hiya taklfa w lwaqt w les documents li khassni bach njib ijaza mekaniki siyanat ttayyarat?",
     "gold_answer": "bach takhod ijaza mekaniki siyanat ttayyarat, khass tkoun taklfa 400 dirham, w lmoda dyal l2ijra2 hiya 15 youm. lwata2i9 lmatluba huma: talab maktoub mwaqqa3 mn taraf lmostakhdem, mla w tawqi3 istimarat l2idara mn taraf lma3ni, watika itbat naja7 lma3ni f limti7an ttatbi9i w nnadari, itbat istifa2 3adad sanawat ttajriba lmatluba, watika itbat hawiyat lma3ni, w sortayn chamsiyatayn l lma3ni.",
     "gold_keywords": [
       "400 dirham",
@@ -13668,7 +13668,7 @@
     "id": "A76",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq achmen hwa, w chno lmdda w taklfa bach ndir training f L'Office National Marocain du Tourisme?",
+    "question": "chno lwraq li khasni, w chno lmdda w taklfa bach ndir training f L'Office National Marocain du Tourisme?",
     "gold_answer": "khassek tjib: 1. noskha mn bitaqat tta3rif lwataniya 2. ta2min khass b lmotadarrib 3. sira datiya 4. talab maktoub. taklfa hiya b lmajjan w lmoda hiya 15 youm.",
     "gold_keywords": [
       "noskha mn bitaqat tta3rif lwataniya",
@@ -14248,7 +14248,7 @@
     "id": "A79",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach ndir ada2 ojour l'artistes mn taraf jiha khassa, w chno mdada?",
+    "question": "chno hia lwaraq li khasni bach ndir ada2 ojour l'artistes mn taraf jiha khassa, w chno mdada?",
     "gold_answer": "lwata2i9 lmatluba hiya: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 2. noskha mn lfawatir w/wla l3a9d 3. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala). taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -14523,7 +14523,7 @@
     "id": "A80",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach ndir ada2 tta3widat b rasm taqdim lkhadamat, w chno lwaqt w taklfa?",
+    "question": "chno hia lwaraq li khasni bach ndir ada2 tta3widat b rasm taqdim lkhadamat, w chno lwaqt w taklfa?",
     "gold_answer": "lwata2i9 lmatluba hiya: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 2. noskha mn lfawatir w/wla l3a9d 3. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala). taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -14741,7 +14741,7 @@
     "id": "A81",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3tik chno lwaraq bach ndir ada2 l7o9o9 ddawriya dyal krayet tayara l chi jiha machi charikat tayaran, w chno mdada w chi taklfa?",
+    "question": "chno lwaraq bach ndir ada2 l7o9o9 ddawriya dyal krayet tayara l chi jiha machi charikat tayaran, w chno mdada w chi taklfa?",
     "gold_answer": "Khassek tqaddem: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 2. 3a9d listi2jar 3. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala). taklfa hiya b lmajjan, w lmoda dyal lkhadma hiya 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -15168,7 +15168,7 @@
     "id": "A83",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nqaddem chno mn lwaraq bach ntlab lmosahama lmaliya dyal ddawla 3la itifaqiyat l2istitmar, w chno taman w lwaqt li ghadi yakhdem?",
+    "question": "achmen mn lwaraq bach ntlab lmosahama lmaliya dyal ddawla 3la itifaqiyat l2istitmar, w chno taman w lwaqt li ghadi yakhdem?",
     "gold_answer": "bach ttlab lmosahama lmaliya dyal ddawla, khassek tqaddem: 1. talab l7osoul 3la lmosahama lmaliya m3a ta7did lmablagh, 2. fawatir nnafaqat lmonjaza, 3. nosakh mn chchikat, 4. kachf l7sab lli ybarrer ada2 nnafaqat, w 5. chahada msallma mn mdaqqiq l l7sabat tatbet tta9addom l7asil f injaz lmachrou3. taklfa dyalha b lmajjan w lmoda hiya 60 youm.",
     "gold_keywords": [
       "talab l7osoul 3la lmosahama lmaliya",
@@ -15628,7 +15628,7 @@
     "id": "A85",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nkhdem lkhedma dyal ada2 b rasm tajawoz wajibat nna9l lba7ri l nisbat tafawwoq 10%? Chno hiya lwaraq, w chno taman w chno lwaqt?",
+    "question": "achno khassni bach nkhles ada2 b rasm tajawoz wajibat nna9l lba7ri l nisbat tafawwoq 10%? Chno hiya lwaraq, w chno taman w chno lwaqt?",
     "gold_answer": "bach tkhalles b rasm tajawoz wajibat nna9l lba7ri l nisba tfou9 10%, khassek tjib: mol7a9 banki m3abbi w mwaqqa3 w makhtoum, noskha mn lfawatir l2awwaliya w nniha2iya, risala tawdi7iya, sanad istirad motadammin l tta9yidat ljomrokiya, w noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala). taklfa hiya b lmajjan, w lmoda hiya 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -15995,7 +15995,7 @@
     "id": "A87",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nqaddem chno mn lwaraq bach ndawwi 3la ta3widat 3n adrar rsif mina b lkharej, w chno lwaqt w taklfa?",
+    "question": "achno khassni nqaddem chno mn lwaraq bach ndawwi 3la ta3widat 3n adrar rsif mina b lkharej, w chno lwaqt w taklfa?",
     "gold_answer": "bach ttlab tta3wid, khassek tjib: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 2. noskha mn l7okm wla 3a9d lmosala7a ila qtada l2amr dalik 3. ta9rir lkhibra 4. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala). taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -16119,7 +16119,7 @@
     "id": "A88",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Shno hia taklifa w lwaqt dyal ada2 taklfat itlaf lbada2i3 f lkharej, w chno huma les 5 documents li khassni?",
+    "question": "chno hia taklifa w lwaqt dyal ada2 taklfat itlaf lbada2i3 f lkharej, w chno huma les 5 documents li khassni?",
     "gold_answer": "taklfa hiya b lmajjan, w moddat l2ijra2 hiya 60 youm. amma lwata2i9 lmatluba fa hiya: 1. itbat ta7wil madakhil ttasdir na7wa lmaghrib, 3ind li9tida2 2. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala) 3. noskha mn lfawatir w/wla l3a9d 4. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 5. ttasri7 lmowa7had l lbada2i3 b rasm ttasdir.",
     "gold_keywords": [
       "b lmajjan",
@@ -16508,7 +16508,7 @@
     "id": "A90",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nkhdem chno lwaraq wla chno taklfa w chno lwaqt bach ndfa3 dfa3a b rasm 3amaliyat istirad?",
+    "question": "chno lwaraq wla chno taklfa w chno lwaqt bach ndfa3 dfa3a b rasm 3amaliyat istirad?",
     "gold_answer": "bach tkhalles daf3a b rasm 3amaliyat istirad, khassek tjib: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 2. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala) 3. noskha mn lfawatir w/wla 3a9d tijari ywaddah chorot l2ada2, ilakh. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -16660,7 +16660,7 @@
     "id": "A91",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nqaddem chno mn lwaraq bach ndawer 3la ada2 do3irat tta2khir 3an l2ada2 f maktab ssarf, w chno hia lwaqt li ghayakhod liya?",
+    "question": "ach khassni nqaddem mn lwaraq bach ndawer 3la ada2 do3irat tta2khir 3an l2ada2 f maktab ssarf, w chno hia lwaqt li ghayakhod liya?",
     "gold_answer": "bach dir ada2 do3irat tta2khir 3an l2ada2, khassek tqaddem: 1. risala tawdi7iya 2. iltizam istirad motadammin l tta9yidat ljomrokiya 3. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 4. bayan ywaddah mawa3id 7oloul ajal l2ada2 lmota3aqad bcha2niha w si3r fa2idat tta2khir w tafasil 7sab had lfawa2id. had lkhadma b lmajjan, w lmoda hiya 60 youm.",
     "gold_keywords": [
       "risala tawdi7iya",
@@ -16873,7 +16873,7 @@
     "id": "A92",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq chno hiya bach ndir l'importation 3la 7sab tghyir smit fournisseur ajnabi, w chno hia lwaqt w lkost?",
+    "question": "chno hiya lweraq li khasni bach ndir l'importation 3la 7sab tghyir smit fournisseur ajnabi, w chno hia lwaqt w lkost?",
     "gold_answer": "khassek tjib: mol7a9 banki m3abbi w mwaqqa3 w makhtoum, w noskha mn lfatoura, w noskha mn iltizam istirad motadammin l tta9yidat ljomrokiya, w noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala), w ich-had banki y2akkad l2ada2at lmonjaza, w mahdar taghyir tasmiyat lmaward. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -17395,7 +17395,7 @@
     "id": "A94",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach ndir ada2 fawa2id tta2khir 3la fawatir lmosa3ada ttiqniya, w chno taklfa w lmoda?",
+    "question": "chno hia lwaraq li khasni bach ndir ada2 fawa2id tta2khir 3la fawatir lmosa3ada ttiqniya, w chno taklfa w lmoda?",
     "gold_answer": "bach dir ada2 fawa2id tta2khir 3la fawatir lmosa3ada ttiqniya, khassek tjib: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum, 2. noskha mn lfawatir, 3. kayfiyat 7sab fawa2id tta2khir, 4. 3a9d ynass 3la ada2 fawa2id tta2khir, w 5. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala). taklfa hiya b lmajjan w lmoda hiya 60 youm.",
     "gold_keywords": [
       "b lmajjan",
@@ -17763,7 +17763,7 @@
     "id": "A96",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach ndir ada2 qimat istirad kan msarra7 bih mobda2iyan bghyr ada2, w chno hiya lwaqt w taklfa?",
+    "question": "chno hia lwaraq li khasni bach ndir ada2 qimat istirad kan msarra7 bih mobda2iyan bghyr ada2, w chno hiya lwaqt w taklfa?",
     "gold_answer": "bach dir had l3amaliya, khassek tjib: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 2. ttasri7 lmowa7had l lbada2i3 lmostawrada bdoun ada2 3. risala tawdi7iya tbayyen sabab ta7wil istirad bdoun ada2 ila istirad b ada2 4. noskha mn motalabat lmaward 5. noskha mn mostakhraj ssijill ttijari (namodaj 7 w/wla chahadat tta3rif lmowa7had l lmoqawala) 6. tta9yid lmo7asabati l ddayn 7. noskha mn lfawatir w/wla 3a9d tijari ywaddah chorot l2ada2. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -18217,7 +18217,7 @@
     "id": "A98",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni n3raf chno hia lwaraq li khasni bach ndir ada2 ma7soul bay3 3a9ar lada maktab ssarf, w chno hiya taklfa w lwaqt?",
+    "question": "chno hia lwaraq li khasni bach ndir ada2 ma7soul bay3 3a9ar lada maktab ssarf, w chno hiya taklfa w lwaqt?",
     "gold_answer": "khassek tjib: mol7a9 banki m3abbi w mwaqqa3 w makhtoum, risala tawdi7iya, wata2i9 itbat tamwil l2istitmar b l3omla l2ajnabiya wla mn 7sab b l3omla l2ajnabiya wla 7sab b ddirham l9abil l tta7wil, 3a9d chira2 l3a9ar, 3a9d bay3 l3a9ar, bayan ywaddah masarif l2isla7 wla lbina2 lmonaffada 3la l3a9ar lmadkour mrfou9 b lmostanadat l2itbatiya l tamwil lmasroufat lmadkoura b l3omla l2ajnabiya wla b ddirham l9abil l tta7wil, wata2i9 itbat daf3 ddara2ib w rrosoum, noskha mn bitaqat tta3rif, w noskha mn kachf l7sab lbanki l lma3ni b l2amr. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -18516,7 +18516,7 @@
     "id": "A100",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nji b'lwaraq chno w lwaqt bach ndir sarf dyal masarif mokhtalifa machi madkoura f ttawjihat l3amma?",
+    "question": "achmen waraq w chno  lwaqt bach ndir sarf dyal masarif mokhtalifa machi madkoura f ttawjihat l3amma?",
     "gold_answer": "bach dir 3amaliyat ssarf, khassek tjib: 1. mol7a9 banki m3abbi w mwaqqa3 w makhtoum, 2. wata2i9 itbat lmablagh lmorad ta7wilou, w 3. noskha l mostakhraj ssijill ttijari (namodaj 7) w/wla chahadat tta3rif lmowa7had. taklfa dyalha b lmajjan w lmoda hiya 60 youm.",
     "gold_keywords": [
       "mol7a9 banki m3abbi w mwaqqa3 w makhtoum",
@@ -18727,7 +18727,7 @@
     "id": "A101",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nkhdem chno lwaraq bach ndawer masarif krayet talaba f 3a9d kolocation, w ach hia taklfa w kamel lwaqt?",
+    "question": "chno lwaraq bach ndawer masarif krayet talaba f 3a9d kolocation, w ach hia taklfa w kamel lwaqt?",
     "gold_answer": "lwata2i9 lmatluba hiya: 1. noskha mn 3a9d ssakan lmochtarak 2. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 3. chahadat ttasjil 4. noskha mn bitaqat lhawiya. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "noskha mn 3a9d ssakan lmochtarak",
@@ -18880,7 +18880,7 @@
     "id": "A102",
     "category": "ARABIZI",
     "language": "Arabizi",
-    "question": "Wach khassni nkhdem chno lwaraq bach ndawer masarif l2iqama f compte banki mkhassas mn taraf ljami3a, w chno taklfa w lmodda?",
+    "question": "chno lwaraq bach ndawer masarif l2iqama f compte banki mkhassas mn taraf ljami3a, w chno taklfa w lmodda?",
     "gold_answer": "bach tkhalles masarif l2iqama f 7sab banki mkhassas mn taraf ljami3a, khassek tjib: 1. noskha mn bitaqat lhawiya 2. chahadat ttasjil wla ttasjil l2awwali 3. mol7a9 banki m3abbi w mwaqqa3 w makhtoum 4. ay watika sadira 3an ssolta l2ajnabiya tatbet wojoub ta7wil masarif l2iqama ila l7sab lbanki lmokhassas mn taraf ljami3a. taklfa: b lmajjan. lmoda: 60 youm.",
     "gold_keywords": [
       "b lmajjan",
