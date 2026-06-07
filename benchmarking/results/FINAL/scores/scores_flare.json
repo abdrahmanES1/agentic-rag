@@ -54,5 +54,13 @@
   "rgb_information_integration": 0.499,
   "rgb_counterfactual_robustness": 0.7692,
   "cross_lingual_consistency": 0.6176,
-  "context_entity_recall": 0.13186472993361617
+  "context_entity_recall": 0.13186472993361617,
+  "multihop_routing_rate": 0.0,
+  "multihop_coverage_rate": 0.5833,
+  "multihop_success_rate": 0.0,
+  "multihop_avg_steps": 0.0,
+  "multihop_items_n": 12,
+  "bertscore_precision": 0.8922929763793945,
+  "bertscore_recall": 0.9188215136528015,
+  "bertscore_f1": 0.9049501419067383
 }

@@ -63,5 +63,8 @@
   "rgb_information_integration": 0.3887,
   "rgb_counterfactual_robustness": 0.9231,
   "cross_lingual_consistency": 0.7673,
-  "context_entity_recall": 0.14038526938276188
+  "context_entity_recall": 0.14038526938276188,
+  "bertscore_precision": 0.8711987137794495,
+  "bertscore_recall": 0.9251324534416199,
+  "bertscore_f1": 0.8967450261116028
 }
