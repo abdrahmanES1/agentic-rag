@@ -536,15 +536,22 @@ def compute_ares_scores(
         if not contexts:
             contexts = [""]
 
+        # Truncation budgets: v12 produces complete multi-hop answers (~300 words
+        # ≈ 1500 chars). The old answer[:600] cap clipped 60% of v12 answers →
+        # judge scored faithfulness of just the FIRST aspect → systematic
+        # undercount. Raised to 2400 (~600 tokens, well within gpt-4o-mini limits).
+        # Documents truncated at 1200 to fit more relevant context per chunk.
+        doc_cap = 1200
+        ans_cap = 2400
         for doc in contexts:
             cr_scores.append(_llm_score(
-                _ARES_CONTEXT_RELEVANCE_PROMPT.format(question=question, document=doc[:800])
+                _ARES_CONTEXT_RELEVANCE_PROMPT.format(question=question, document=doc[:doc_cap])
             ))
             af_scores.append(_llm_score(
-                _ARES_ANSWER_FAITHFULNESS_PROMPT.format(document=doc[:800], answer=answer[:600])
+                _ARES_ANSWER_FAITHFULNESS_PROMPT.format(document=doc[:doc_cap], answer=answer[:ans_cap])
             ))
             ar_scores.append(_llm_score(
-                _ARES_ANSWER_RELEVANCE_PROMPT.format(question=question, answer=answer[:600])
+                _ARES_ANSWER_RELEVANCE_PROMPT.format(question=question, answer=answer[:ans_cap])
             ))
 
     n = max(len(cr_scores), 1)
