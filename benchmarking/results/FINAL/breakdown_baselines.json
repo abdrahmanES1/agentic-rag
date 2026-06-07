@@ -1,0 +1,681 @@
+{
+  "category_scores": {
+    "naive_rag": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.0704178202150146,
+        "rouge_l": 0.06074488006733863,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.526124610166124,
+        "rouge_l": 0.4839543617547937,
+        "keyword_hit_rate": 0.8851190476190477,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.6258575303015801,
+        "rouge_l": 0.5250731252540894,
+        "keyword_hit_rate": 0.6261904761904763,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.5821309251297769,
+        "rouge_l": 0.5156575440679374,
+        "keyword_hit_rate": 0.6410256410256411,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.03980272694886589,
+        "rouge_l": 0.02685772132760041,
+        "keyword_hit_rate": 0.06666666666666667,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.4530223381443419,
+        "rouge_l": 0.3562471279138535,
+        "keyword_hit_rate": 0.9444444444444445,
+        "n": 12
+      }
+    },
+    "basic_react": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.051802366539141664,
+        "rouge_l": 0.029627437796791552,
+        "keyword_hit_rate": 0.042261904761904764,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.32867296162223975,
+        "rouge_l": 0.2552521412477485,
+        "keyword_hit_rate": 0.8357142857142856,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.48611048880011803,
+        "rouge_l": 0.339288028115667,
+        "keyword_hit_rate": 0.6488095238095238,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.24108715895091956,
+        "rouge_l": 0.16002497413435465,
+        "keyword_hit_rate": 0.8461538461538461,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.04648768778653389,
+        "rouge_l": 0.024540318028019367,
+        "keyword_hit_rate": 0.1,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.34629977250599436,
+        "rouge_l": 0.23596771897072377,
+        "keyword_hit_rate": 0.7916666666666666,
+        "n": 12
+      }
+    },
+    "adaptive_simple": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.04929074875656907,
+        "rouge_l": 0.027476578428561747,
+        "keyword_hit_rate": 0.011904761904761904,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.2278333786249987,
+        "rouge_l": 0.16957724063733468,
+        "keyword_hit_rate": 0.3148809523809524,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.3909315278646959,
+        "rouge_l": 0.2522663256345024,
+        "keyword_hit_rate": 0.3083333333333333,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.34134684056404374,
+        "rouge_l": 0.2596790255143454,
+        "keyword_hit_rate": 0.7692307692307693,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.0390542956797803,
+        "rouge_l": 0.02549314930436673,
+        "keyword_hit_rate": 0.16666666666666666,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.22611773600642196,
+        "rouge_l": 0.1355493052810457,
+        "keyword_hit_rate": 0.5347222222222222,
+        "n": 12
+      }
+    },
+    "hyde": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.06463094787494723,
+        "rouge_l": 0.05480192209866573,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.4807136995059108,
+        "rouge_l": 0.43217804721846514,
+        "keyword_hit_rate": 0.7428571428571429,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.5895300131306367,
+        "rouge_l": 0.4708023232285772,
+        "keyword_hit_rate": 0.5684523809523809,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.5934567161377781,
+        "rouge_l": 0.5417578924645965,
+        "keyword_hit_rate": 0.7564102564102565,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.043864319702730414,
+        "rouge_l": 0.030506651840825943,
+        "keyword_hit_rate": 0.06666666666666667,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.4487328719060352,
+        "rouge_l": 0.3577598433591023,
+        "keyword_hit_rate": 0.8194444444444445,
+        "n": 12
+      }
+    },
+    "self_rag": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.04225598655643133,
+        "rouge_l": 0.023256780920182164,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.07985104746064835,
+        "rouge_l": 0.04282181908203694,
+        "keyword_hit_rate": 0.024999999999999998,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.23315900397569747,
+        "rouge_l": 0.1349082808570313,
+        "keyword_hit_rate": 0.09523809523809523,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.29598201948857117,
+        "rouge_l": 0.26791636071756914,
+        "keyword_hit_rate": 0.3333333333333333,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.025151841237864507,
+        "rouge_l": 0.01573272453974595,
+        "keyword_hit_rate": 0.06666666666666667,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.14258397959231192,
+        "rouge_l": 0.07763532429133363,
+        "keyword_hit_rate": 0.15277777777777776,
+        "n": 12
+      }
+    },
+    "flare": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.04772290079812453,
+        "rouge_l": 0.03696177170626524,
+        "keyword_hit_rate": 0.016071428571428573,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.4692613195158658,
+        "rouge_l": 0.40428998893086115,
+        "keyword_hit_rate": 0.6154761904761905,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.5797826405605372,
+        "rouge_l": 0.4802622279032081,
+        "keyword_hit_rate": 0.3696428571428571,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.5030472829338639,
+        "rouge_l": 0.40679490078259833,
+        "keyword_hit_rate": 0.6602564102564104,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.05520747751152777,
+        "rouge_l": 0.0413234631549241,
+        "keyword_hit_rate": 0.0,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.4990088512131396,
+        "rouge_l": 0.4019348986755357,
+        "keyword_hit_rate": 0.4375,
+        "n": 12
+      }
+    },
+    "crag": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.06922897243544877,
+        "rouge_l": 0.059094375733517876,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.573408719107125,
+        "rouge_l": 0.5349464003764156,
+        "keyword_hit_rate": 0.8702380952380953,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.6565432660427774,
+        "rouge_l": 0.5701254700910093,
+        "keyword_hit_rate": 0.6136904761904762,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.562370212000686,
+        "rouge_l": 0.5208438113997447,
+        "keyword_hit_rate": 0.6153846153846154,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.06674256537995746,
+        "rouge_l": 0.05339398241874797,
+        "keyword_hit_rate": 0.06666666666666667,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.5324162829586822,
+        "rouge_l": 0.46122707970324134,
+        "keyword_hit_rate": 0.6875,
+        "n": 12
+      }
+    },
+    "v12_pipeline": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.22492416844694238,
+        "rouge_l": 0.19951686434333446,
+        "keyword_hit_rate": 0.0630952380952381,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.5715858365889098,
+        "rouge_l": 0.5107386906291344,
+        "keyword_hit_rate": 0.831547619047619,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.5428787394940652,
+        "rouge_l": 0.42414995356747304,
+        "keyword_hit_rate": 0.5517857142857142,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.5299246421734991,
+        "rouge_l": 0.4847985609442407,
+        "keyword_hit_rate": 0.7051282051282051,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.31518830094513556,
+        "rouge_l": 0.30965944663112843,
+        "keyword_hit_rate": 0.2,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.4858821842965238,
+        "rouge_l": 0.3722463997873766,
+        "keyword_hit_rate": 0.6875,
+        "n": 12
+      }
+    }
+  },
+  "language_scores": {
+    "naive_rag": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.0704178202150146,
+        "rouge_l": 0.06074488006733863,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.526124610166124,
+        "rouge_l": 0.4839543617547937,
+        "keyword_hit_rate": 0.8851190476190477,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.6258575303015801,
+        "rouge_l": 0.5250731252540894,
+        "keyword_hit_rate": 0.6261904761904763,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.3400252747163048,
+        "rouge_l": 0.28453448569408585,
+        "keyword_hit_rate": 0.5166666666666667,
+        "n": 40
+      }
+    },
+    "basic_react": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.051802366539141664,
+        "rouge_l": 0.029627437796791552,
+        "keyword_hit_rate": 0.042261904761904764,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.32867296162223975,
+        "rouge_l": 0.2552521412477485,
+        "keyword_hit_rate": 0.8357142857142856,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.48611048880011803,
+        "rouge_l": 0.339288028115667,
+        "keyword_hit_rate": 0.6488095238095238,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.1996761413307974,
+        "rouge_l": 0.13200105154538966,
+        "keyword_hit_rate": 0.55,
+        "n": 40
+      }
+    },
+    "adaptive_simple": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.04929074875656907,
+        "rouge_l": 0.027476578428561747,
+        "keyword_hit_rate": 0.011904761904761904,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.2278333786249987,
+        "rouge_l": 0.16957724063733468,
+        "keyword_hit_rate": 0.3148809523809524,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.3909315278646959,
+        "rouge_l": 0.2522663256345024,
+        "keyword_hit_rate": 0.3083333333333333,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.19341840486515843,
+        "rouge_l": 0.13462040586561347,
+        "keyword_hit_rate": 0.4729166666666667,
+        "n": 40
+      }
+    },
+    "hyde": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.06463094787494723,
+        "rouge_l": 0.05480192209866573,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.4807136995059108,
+        "rouge_l": 0.43217804721846514,
+        "keyword_hit_rate": 0.7428571428571429,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.5895300131306367,
+        "rouge_l": 0.4708023232285772,
+        "keyword_hit_rate": 0.5684523809523809,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.3439424142051123,
+        "rouge_l": 0.29483926249903425,
+        "keyword_hit_rate": 0.5166666666666667,
+        "n": 40
+      }
+    },
+    "self_rag": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.04225598655643133,
+        "rouge_l": 0.023256780920182164,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.07985104746064835,
+        "rouge_l": 0.04282181908203694,
+        "keyword_hit_rate": 0.024999999999999998,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.23315900397569747,
+        "rouge_l": 0.1349082808570313,
+        "keyword_hit_rate": 0.09523809523809523,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.1484012906756784,
+        "rouge_l": 0.11626318622301479,
+        "keyword_hit_rate": 0.17916666666666667,
+        "n": 40
+      }
+    },
+    "flare": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.04772290079812453,
+        "rouge_l": 0.03696177170626524,
+        "keyword_hit_rate": 0.016071428571428573,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.4692613195158658,
+        "rouge_l": 0.40428998893086115,
+        "keyword_hit_rate": 0.6154761904761905,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.5797826405605372,
+        "rouge_l": 0.4802622279032081,
+        "keyword_hit_rate": 0.3696428571428571,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.33389582638427057,
+        "rouge_l": 0.2682851110401017,
+        "keyword_hit_rate": 0.3458333333333333,
+        "n": 40
+      }
+    },
+    "crag": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.06922897243544877,
+        "rouge_l": 0.059094375733517876,
+        "keyword_hit_rate": 0.0,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.573408719107125,
+        "rouge_l": 0.5349464003764156,
+        "keyword_hit_rate": 0.8702380952380953,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.6565432660427774,
+        "rouge_l": 0.5701254700910093,
+        "keyword_hit_rate": 0.6136904761904762,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.3675236658053117,
+        "rouge_l": 0.32766510602291987,
+        "keyword_hit_rate": 0.43125,
+        "n": 40
+      }
+    },
+    "v12_pipeline": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.22492416844694238,
+        "rouge_l": 0.19951686434333446,
+        "keyword_hit_rate": 0.0630952380952381,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.5715858365889098,
+        "rouge_l": 0.5107386906291344,
+        "keyword_hit_rate": 0.831547619047619,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.5428787394940652,
+        "rouge_l": 0.42414995356747304,
+        "keyword_hit_rate": 0.5517857142857142,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.43618577684977017,
+        "rouge_l": 0.3853557447297643,
+        "keyword_hit_rate": 0.5104166666666667,
+        "n": 40
+      }
+    }
+  },
+  "win_rate_matrix": {
+    "naive_rag": {
+      "naive_rag": 0.5,
+      "basic_react": 0.8065,
+      "adaptive_simple": 0.8347,
+      "hyde": 0.4758,
+      "self_rag": 0.8629,
+      "flare": 0.6048,
+      "crag": 0.3226,
+      "v12_pipeline": 0.3952
+    },
+    "basic_react": {
+      "naive_rag": 0.1935,
+      "basic_react": 0.5,
+      "adaptive_simple": 0.6613,
+      "hyde": 0.2984,
+      "self_rag": 0.8226,
+      "flare": 0.3387,
+      "crag": 0.1855,
+      "v12_pipeline": 0.1452
+    },
+    "adaptive_simple": {
+      "naive_rag": 0.1653,
+      "basic_react": 0.3387,
+      "adaptive_simple": 0.5,
+      "hyde": 0.2097,
+      "self_rag": 0.8065,
+      "flare": 0.2782,
+      "crag": 0.125,
+      "v12_pipeline": 0.1048
+    },
+    "hyde": {
+      "naive_rag": 0.5242,
+      "basic_react": 0.7016,
+      "adaptive_simple": 0.7903,
+      "hyde": 0.5,
+      "self_rag": 0.8145,
+      "flare": 0.5484,
+      "crag": 0.3629,
+      "v12_pipeline": 0.3831
+    },
+    "self_rag": {
+      "naive_rag": 0.1371,
+      "basic_react": 0.1774,
+      "adaptive_simple": 0.1935,
+      "hyde": 0.1855,
+      "self_rag": 0.5,
+      "flare": 0.2056,
+      "crag": 0.1452,
+      "v12_pipeline": 0.0968
+    },
+    "flare": {
+      "naive_rag": 0.3952,
+      "basic_react": 0.6613,
+      "adaptive_simple": 0.7218,
+      "hyde": 0.4516,
+      "self_rag": 0.7944,
+      "flare": 0.5,
+      "crag": 0.3347,
+      "v12_pipeline": 0.3508
+    },
+    "crag": {
+      "naive_rag": 0.6774,
+      "basic_react": 0.8145,
+      "adaptive_simple": 0.875,
+      "hyde": 0.6371,
+      "self_rag": 0.8548,
+      "flare": 0.6653,
+      "crag": 0.5,
+      "v12_pipeline": 0.4879
+    },
+    "v12_pipeline": {
+      "naive_rag": 0.6048,
+      "basic_react": 0.8548,
+      "adaptive_simple": 0.8952,
+      "hyde": 0.6169,
+      "self_rag": 0.9032,
+      "flare": 0.6492,
+      "crag": 0.5121,
+      "v12_pipeline": 0.5
+    }
+  },
+  "saved_at": "2026-06-06T18:22:08.074672"
+}

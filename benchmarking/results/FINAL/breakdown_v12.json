@@ -1,0 +1,86 @@
+{
+  "category_scores": {
+    "v12_pipeline": {
+      "ARABIZI": {
+        "exact_match": 0.0,
+        "token_f1": 0.22343272244125778,
+        "rouge_l": 0.18622603580804606,
+        "keyword_hit_rate": 0.06547619047619048,
+        "n": 28
+      },
+      "DARIJA": {
+        "exact_match": 0.0,
+        "token_f1": 0.48023346911189124,
+        "rouge_l": 0.41967191609930493,
+        "keyword_hit_rate": 0.6517857142857143,
+        "n": 28
+      },
+      "SIMPLE": {
+        "exact_match": 0.0,
+        "token_f1": 0.47689209184478815,
+        "rouge_l": 0.369100102497845,
+        "keyword_hit_rate": 0.5125,
+        "n": 28
+      },
+      "LEGAL": {
+        "exact_match": 0.0,
+        "token_f1": 0.4168804259177286,
+        "rouge_l": 0.3447832370051746,
+        "keyword_hit_rate": 0.7307692307692307,
+        "n": 13
+      },
+      "OUTSCOPE": {
+        "exact_match": 0.0,
+        "token_f1": 0.0929139196870069,
+        "rouge_l": 0.07985421564508344,
+        "keyword_hit_rate": 0.1,
+        "n": 15
+      },
+      "MULTIHOP": {
+        "exact_match": 0.0,
+        "token_f1": 0.40286875826778806,
+        "rouge_l": 0.3287676264372024,
+        "keyword_hit_rate": 0.6805555555555555,
+        "n": 12
+      }
+    }
+  },
+  "language_scores": {
+    "v12_pipeline": {
+      "Arabizi": {
+        "exact_match": 0.0,
+        "token_f1": 0.22343272244125778,
+        "rouge_l": 0.18622603580804606,
+        "keyword_hit_rate": 0.06547619047619048,
+        "n": 28
+      },
+      "Darija": {
+        "exact_match": 0.0,
+        "token_f1": 0.48023346911189124,
+        "rouge_l": 0.41967191609930493,
+        "keyword_hit_rate": 0.6517857142857143,
+        "n": 28
+      },
+      "french": {
+        "exact_match": 0.0,
+        "token_f1": 0.47689209184478815,
+        "rouge_l": 0.369100102497845,
+        "keyword_hit_rate": 0.5125,
+        "n": 28
+      },
+      "arabic_msa": {
+        "exact_match": 0.0,
+        "token_f1": 0.2911894857862258,
+        "rouge_l": 0.24063017082474877,
+        "keyword_hit_rate": 0.4791666666666667,
+        "n": 40
+      }
+    }
+  },
+  "win_rate_matrix": {
+    "v12_pipeline": {
+      "v12_pipeline": 0.5
+    }
+  },
+  "saved_at": "2026-06-07T04:28:02.337576"
+}
