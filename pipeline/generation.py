@@ -688,15 +688,14 @@ class PlannerAgent:
             tool_args = dict(planned_step.tool_args)
             tool_args["_intent"] = intent
 
-            # Filter out chunks already in memory so each hop returns NEW evidence.
-            # Without this, the same chunks get re-retrieved across hops (40-60%
-            # duplicate rate in tool_calls), wasting LLM tokens on intermediate
-            # generation and making the execution_trace misleading. Eliminates
-            # cross-hop redundancy at the tool boundary instead of downstream.
-            seen_ids = set(self.memory._store.keys())
+            # Tool returns ALL results (no filtering) so the intermediate-generation
+            # prompt sees full chunk context — even chunks already in memory provide
+            # repetition cues that help the LLM produce more comprehensive partial
+            # answers. AgentMemory.add() naturally dedups what gets stored; the
+            # ragas_contexts/synthesis path already dedups downstream. Filtering at
+            # the tool boundary caused quality collapse (Fix 16 regression).
             tool_results = self.tools.execute(
                 planned_step.tool, tool_args, flags, self.steps, state,
-                seen_chunk_ids=seen_ids,
             )
 
             if tool_results:
@@ -737,12 +736,8 @@ class PlannerAgent:
                     state.log(f"  → Reflection={refl_status} triggered adaptive retrieval for {intent}")
                     rephrased = self._rephrase_for_retry(sub_q, intermediate, flags.language)
                     extra_args = {"query": rephrased, "_intent": intent}
-                    # Pass current memory IDs so the adaptive re-retrieval also
-                    # returns only chunks not already seen across all hops.
-                    seen_ids_retry = set(self.memory._store.keys())
                     extra = self.tools.execute(
                         "retrieve_kb", extra_args, flags, self.steps, state,
-                        seen_chunk_ids=seen_ids_retry,
                     )
                     if extra:
                         self.memory.add_all(extra, step=self.steps)
