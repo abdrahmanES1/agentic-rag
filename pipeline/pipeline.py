@@ -282,10 +282,8 @@ class MoroccanRAGPipeline:
         # ── Step 10: Verify (11 layers) ───────────────────────────────────────
         t_verify = time.time()
         all_chunks = agent.memory.get_top_chunks(settings.memory_max_chunks)
-        # generation_chunks: ALL chunks seen across the pipeline (initial retrieval
-        # + every agentic hop) so citation injection can match sources from any step.
-        # Using only retrieval.chunks (initial) caused multi-hop citations to fail.
-        generation_chunks = all_chunks
+        # retrieval.chunks is List[ScoredChunk] — extract the inner Chunk objects
+        generation_chunks = [sc.chunk for sc in retrieval.chunks]
         verified, is_grounded, is_abstained, audit = verify_output(
             answer=raw_answer,
             all_chunks=all_chunks,

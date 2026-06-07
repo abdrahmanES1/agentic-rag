@@ -451,15 +451,7 @@ class ToolRegistry:
         flags: QuestionFlags,
         step_index: int,
         state: AgentState,
-        seen_chunk_ids: Optional[set] = None,
     ) -> List[ScoredChunk]:
-        """
-        Execute a tool and record the call in ExecutionTrace. When
-        `seen_chunk_ids` is provided, chunks already retrieved in previous
-        hops are filtered out — so the tool returns only genuinely NEW
-        evidence and the ToolCall trace shows real per-hop work (not 40-60%
-        duplicates from re-retrieving the same chunks across hops).
-        """
         fn = self._registry.get(tool)
         if fn is None:
             log.warning(f"  [ToolRegistry] Unknown tool '{tool}' — falling back to retrieve_kb")
@@ -468,11 +460,6 @@ class ToolRegistry:
         try:
             t0 = time.time()
             results = fn(args, flags)
-            # Filter chunks already seen in earlier hops so each tool call yields
-            # NEW evidence. Skips the filter when seen_chunk_ids is None
-            # (back-compat: no behaviour change for callers that don't pass it).
-            if seen_chunk_ids is not None and results:
-                results = [sc for sc in results if sc.chunk.chunk_id not in seen_chunk_ids]
             latency_ms = round((time.time() - t0) * 1000)
             tc = ToolCall(
                 step_index=step_index,
@@ -673,7 +660,7 @@ class PlannerAgent:
         intermediate_texts: List[str] = []
 
         for planned_step in state.plan.steps:
-            if self.steps >= settings.max_agent_steps:
+            if self.steps >= settings.max_agent_steps - 1:
                 state.log(f"STOP: reached MAX_AGENT_STEPS ({settings.max_agent_steps})")
                 break
 
@@ -688,14 +675,8 @@ class PlannerAgent:
             tool_args = dict(planned_step.tool_args)
             tool_args["_intent"] = intent
 
-            # Tool returns ALL results (no filtering) so the intermediate-generation
-            # prompt sees full chunk context — even chunks already in memory provide
-            # repetition cues that help the LLM produce more comprehensive partial
-            # answers. AgentMemory.add() naturally dedups what gets stored; the
-            # ragas_contexts/synthesis path already dedups downstream. Filtering at
-            # the tool boundary caused quality collapse (Fix 16 regression).
             tool_results = self.tools.execute(
-                planned_step.tool, tool_args, flags, self.steps, state,
+                planned_step.tool, tool_args, flags, self.steps, state
             )
 
             if tool_results:
@@ -722,39 +703,22 @@ class PlannerAgent:
                 last_tc.intermediate_answer = intermediate
                 last_tc.reflection = reflection
 
-            # Reflection trigger: use STRUCTURED status from _reflect (returns
-            # "complete" / "partial" / "not_found" via JSON schema). Trigger
-            # adaptive re-retrieval on BOTH "partial" (incomplete evidence) AND
-            # "not_found" (no info found this hop) — the previous keyword check
-            # missed "not_found" cases, leaving questions under-answered.
-            refl_status = reflection.strip().lower()
-            needs_retry = refl_status in ("partial", "not_found") or any(
-                kw in refl_status for kw in ("partial", "insufficient", "incomplet", "manque")
-            )
-            if needs_retry:
-                if self.steps < settings.max_agent_steps:
-                    state.log(f"  → Reflection={refl_status} triggered adaptive retrieval for {intent}")
+            if (
+                "partial" in reflection.lower()
+                or "insufficient" in reflection.lower()
+                or "incomplet" in reflection.lower()
+                or "manque" in reflection.lower()
+            ):
+                if self.steps < settings.max_agent_steps - 1:
+                    state.log(f"  → Reflection triggered adaptive retrieval for {intent}")
                     rephrased = self._rephrase_for_retry(sub_q, intermediate, flags.language)
                     extra_args = {"query": rephrased, "_intent": intent}
-                    extra = self.tools.execute(
-                        "retrieve_kb", extra_args, flags, self.steps, state,
-                    )
+                    extra = self.tools.execute("retrieve_kb", extra_args, flags, self.steps, state)
                     if extra:
                         self.memory.add_all(extra, step=self.steps)
                         extra_chunks = [sc.chunk for sc in extra[:3]]
                         state.evidence[intent] = state.evidence.get(intent, []) + extra_chunks
                         state.log(f"  → Added {len(extra_chunks)} extra chunks")
-                        # If the original intermediate was not_found and we got
-                        # new chunks, regenerate the intermediate answer with the
-                        # additional evidence so state.facts has real content
-                        # for synthesis instead of "not_found" text.
-                        if refl_status == "not_found":
-                            merged_chunks = (state.evidence.get(intent) or [])[: settings.compress_top_n]
-                            prior = [(i, state.facts.get(i, "")) for i in list(state.facts.keys()) if i != intent]
-                            regen = self._generate_intermediate(sub_q, intent, merged_chunks, prior, flags.language)
-                            if regen and len(regen.split()) >= 8:
-                                state.facts[intent] = regen
-                                state.log(f"  → Regenerated intermediate for {intent} after not_found retry")
 
         t_synth = time.time()
         answer = self._synthesise(question, state, flags) if state.facts else self._generate_direct(question, flags, state)
@@ -1008,39 +972,6 @@ class PlannerAgent:
 
     # ── SYNTHESISE ────────────────────────────────────────────────────────────
 
-    def _build_synthesis_context(self, state: AgentState) -> str:
-        """
-        Build the synthesis context from per-intent evidence rather than just
-        top-RRF chunks. Ensures every intent's source chunks are present in
-        the final synthesis prompt — critical for multi-hop faithfulness where
-        later hops retrieve lower-RRF (but topically distinct) evidence that
-        memory.build_context() would otherwise drop.
-
-        Deduplicates by chunk_id, takes up to 3 chunks per intent, caps total
-        chunks at memory_max_chunks to stay within the LLM context window.
-        Falls back to memory.build_context() if state.evidence is empty.
-        """
-        if not state.evidence:
-            return self.memory.build_context()
-
-        seen: set = set()
-        parts: List[str] = []
-        for intent, chunks in state.evidence.items():
-            for chunk in (chunks or [])[:3]:
-                cid = getattr(chunk, "chunk_id", None) or hash(chunk.text.strip())
-                if cid in seen:
-                    continue
-                seen.add(cid)
-                parts.append(
-                    f"[Source: {short_source(chunk.source)} | Page: {chunk.page}]\n{chunk.text}"
-                )
-                if len(parts) >= settings.memory_max_chunks:
-                    break
-            if len(parts) >= settings.memory_max_chunks:
-                break
-
-        return "\n\n".join(parts) if parts else self.memory.build_context()
-
     def _synthesise(self, question: str, state: AgentState, flags: QuestionFlags) -> str:
         from pipeline.prompts import get_intent_sections, synthesis_prompt
         language = flags.language
@@ -1054,12 +985,9 @@ class PlannerAgent:
             if intent in intent_sections
         )
 
-        # Build synthesis context from PER-INTENT evidence (state.evidence) so
-        # every hop's source chunks are visible, not just the top-RRF ones.
-        # memory.build_context() returns top-5 by RRF — later hops with lower
-        # RRF (different sub-question scoring) were under-represented, hurting
-        # faithfulness on multi-hop syntheses. Deduplicate by chunk_id and cap.
-        retrieved_context = self._build_synthesis_context(state)
+        # Pass the full retrieved evidence so synthesis can extract the answer
+        # even when an individual hop's partial answer came back empty/refused.
+        retrieved_context = self.memory.build_context()
         prompt = synthesis_prompt(question, facts_context, section_instructions, language, retrieved_context)
         try:
             answer = self.ollama.generate(
