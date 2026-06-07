@@ -660,7 +660,7 @@ class PlannerAgent:
         intermediate_texts: List[str] = []
 
         for planned_step in state.plan.steps:
-            if self.steps >= settings.max_agent_steps - 1:
+            if self.steps >= settings.max_agent_steps:
                 state.log(f"STOP: reached MAX_AGENT_STEPS ({settings.max_agent_steps})")
                 break
 
