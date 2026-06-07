@@ -451,7 +451,15 @@ class ToolRegistry:
         flags: QuestionFlags,
         step_index: int,
         state: AgentState,
+        seen_chunk_ids: Optional[set] = None,
     ) -> List[ScoredChunk]:
+        """
+        Execute a tool and record the call in ExecutionTrace. When
+        `seen_chunk_ids` is provided, chunks already retrieved in previous
+        hops are filtered out — so the tool returns only genuinely NEW
+        evidence and the ToolCall trace shows real per-hop work (not 40-60%
+        duplicates from re-retrieving the same chunks across hops).
+        """
         fn = self._registry.get(tool)
         if fn is None:
             log.warning(f"  [ToolRegistry] Unknown tool '{tool}' — falling back to retrieve_kb")
@@ -460,6 +468,11 @@ class ToolRegistry:
         try:
             t0 = time.time()
             results = fn(args, flags)
+            # Filter chunks already seen in earlier hops so each tool call yields
+            # NEW evidence. Skips the filter when seen_chunk_ids is None
+            # (back-compat: no behaviour change for callers that don't pass it).
+            if seen_chunk_ids is not None and results:
+                results = [sc for sc in results if sc.chunk.chunk_id not in seen_chunk_ids]
             latency_ms = round((time.time() - t0) * 1000)
             tc = ToolCall(
                 step_index=step_index,
@@ -675,8 +688,15 @@ class PlannerAgent:
             tool_args = dict(planned_step.tool_args)
             tool_args["_intent"] = intent
 
+            # Filter out chunks already in memory so each hop returns NEW evidence.
+            # Without this, the same chunks get re-retrieved across hops (40-60%
+            # duplicate rate in tool_calls), wasting LLM tokens on intermediate
+            # generation and making the execution_trace misleading. Eliminates
+            # cross-hop redundancy at the tool boundary instead of downstream.
+            seen_ids = set(self.memory._store.keys())
             tool_results = self.tools.execute(
-                planned_step.tool, tool_args, flags, self.steps, state
+                planned_step.tool, tool_args, flags, self.steps, state,
+                seen_chunk_ids=seen_ids,
             )
 
             if tool_results:
@@ -717,7 +737,13 @@ class PlannerAgent:
                     state.log(f"  → Reflection={refl_status} triggered adaptive retrieval for {intent}")
                     rephrased = self._rephrase_for_retry(sub_q, intermediate, flags.language)
                     extra_args = {"query": rephrased, "_intent": intent}
-                    extra = self.tools.execute("retrieve_kb", extra_args, flags, self.steps, state)
+                    # Pass current memory IDs so the adaptive re-retrieval also
+                    # returns only chunks not already seen across all hops.
+                    seen_ids_retry = set(self.memory._store.keys())
+                    extra = self.tools.execute(
+                        "retrieve_kb", extra_args, flags, self.steps, state,
+                        seen_chunk_ids=seen_ids_retry,
+                    )
                     if extra:
                         self.memory.add_all(extra, step=self.steps)
                         extra_chunks = [sc.chunk for sc in extra[:3]]
