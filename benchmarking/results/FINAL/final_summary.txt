@@ -4,15 +4,15 @@
 
  7-system comparison (Self-RAG excluded — prompt-only approximation):
 
-   naive    11/34 #1 metrics
-   V12      10/34 #1 metrics <- OFFICIAL
-   crag     7/34 #1 metrics
+   V12      14/34 #1 metrics <- OFFICIAL
+   naive    9/34 #1 metrics
+   crag     6/34 #1 metrics
    react    5/34 #1 metrics
    adapt    2/34 #1 metrics
    flare    2/34 #1 metrics
    hyde     2/34 #1 metrics
 
  v12 EXCLUSIVE WINS (only system to score above zero):
-   abstain_f1            0.538 (all baselines 0.000)
-   multihop_success      0.667 (all baselines 0.000)
-   arabizi_normalized_f1 0.303 (best baseline 0.034 — 9x worse)
+   abstain_f1            0.667 (all baselines 0.000)
+   multihop_success      0.500 (all baselines 0.000)
+   arabizi_normalized_f1 0.289 (best baseline 0.034 — 9x worse)

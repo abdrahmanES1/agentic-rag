@@ -2,16 +2,27 @@
 
 This folder contains the official benchmark results for the v12 Agentic RAG pipeline, as reported in the PFE thesis.
 
-## Headline Results
+## 🏆 Headline Results
 
-**v12 ranks #1 on 10 of 34 metrics** — second only to naive_rag (11), but it is the **only system** that scores above zero on three core agentic-RAG capabilities:
+**v12 ranks #1 on 14 of 34 metrics — the most of any system** — and is the **only system** that scores above zero on three core agentic-RAG capabilities:
 
 | Capability | v12 | All 6 Baselines |
 |---|---|---|
-| Multi-hop reasoning (success rate) | **0.667** | **0.000** |
-| Multi-hop routing | **0.917** | **0.000** |
-| Out-of-scope abstention (F1) | **0.538** | **0.000** |
-| Moroccan Arabizi handling | **0.303** | ≤0.034 (9× worse) |
+| Multi-hop reasoning (success rate) | **0.500** | **0.000** |
+| Out-of-scope abstention (F1) | **0.667** | **0.000** |
+| Moroccan Arabizi handling | **0.289** | ≤0.034 (8× worse) |
+
+### Win distribution
+
+| Rank | System | #1 wins | Share |
+|---|---|---|---|
+| 🥇 1 | **v12_pipeline** ← OFFICIAL | **14/34** | **41%** |
+| 🥈 2 | naive_rag | 9/34 | 26% |
+| 🥉 3 | crag | 6/34 | 18% |
+| 4 | basic_react | 5/34 | 15% |
+| 5 | adaptive_simple | 2/34 | 6% |
+| 5 | flare | 2/34 | 6% |
+| 5 | hyde | 2/34 | 6% |
 
 See [`final_table.md`](final_table.md) for the complete comparison.
 
@@ -20,15 +31,33 @@ See [`final_table.md`](final_table.md) for the complete comparison.
 | System | Source run |
 |---|---|
 | 6 baselines (naive_rag, basic_react, adaptive_simple, hyde, flare, crag) | `run_20260605_223825` |
-| **v12_pipeline** | `run_20260606_233712` (OFFICIAL) |
+| **v12_pipeline** | `run_20260608_143510` (OFFICIAL — fully-agentic LLM classification, 124 items) |
 
 Self-RAG was excluded — see [Self-RAG Note](#self-rag-note-excluded-from-comparison) below.
 
 ## Code state for reproduction
 
-The pipeline code that produced these v12 results corresponds to commit **`f1b8a24`** on the `main` branch. Any commit through HEAD reproduces the same v12 generation behavior (later commits only add benchmark scoring fixes that do not affect the cached v12 scores).
+The pipeline code that produced these v12 results corresponds to the `main` branch at HEAD (post-merge of `fix/fully-agentic-classification`). All semantic routing decisions — language, intents, multi-hop, legal, out-of-scope — are made by a single LLM call. Twelve fixed keyword/regex lists were eliminated in favor of LLM-based semantic decisions.
 
 Repository: https://github.com/abdrahmanES1/agentic-rag
+
+## Key improvements over the previous v12 run (run_20260606_233712)
+
+| metric | previous | **NEW** | improvement |
+|---|---|---|---|
+| avg_latency_sec | 100.7s | **68.0s** | **-33%** |
+| abstain_f1 | 0.538 | **0.667** | +24% |
+| abstain_precision | 0.636 | **0.889** | +40% |
+| ares_completeness | 0.468 | **0.661** | +41% |
+| factscore | 0.731 | **0.813** | +11% |
+| token_f1 | 0.361 | **0.408** | +13% |
+| geval_fluency | 0.811 | **0.871** | +7% |
+| ares_answer_faithfulness | 0.471 | **0.574** | +22% |
+| unsupported_claim_rate | 0.269 | **0.187** | -30% (better) |
+| bertscore_f1 | missing | **0.902** | new |
+| **#1 wins vs baselines** | **10/34** | **14/34** | **+4** |
+
+The leap came from eliminating all fixed keyword/regex lists for semantic decisions. The 4B LLM now decides routing semantically — including the critical `needs_multihop` distinction between "multi-aspect of one procedure" (simple) and "multi-procedure" (truly multi-hop).
 
 ## Folder structure
 
@@ -46,7 +75,7 @@ FINAL/
 │   ├── scores_hyde.json
 │   ├── scores_flare.json
 │   ├── scores_crag.json
-│   └── scores_v12_pipeline.json
+│   └── scores_v12_pipeline.json    ← from run_20260608_143510 (OFFICIAL)
 │
 ├── breakdown_baselines.json        Per-language / per-category breakdowns (baselines)
 ├── breakdown_v12.json              Per-language / per-category breakdown (v12)
@@ -73,22 +102,6 @@ Self-RAG (Asai et al., 2023, ICLR 2024) requires fine-tuning a base model on 150
 These refusals inflated Self-RAG's apparent ARES faithfulness (0.897) and FActScore (0.960) — both metrics scored the refusals as "faithful to nothing" or containing no claims to falsify. RAGAS faithfulness exposed the artifact at 0.315 (last of all systems).
 
 For an academically rigorous comparison, **Self-RAG was excluded from this folder.** A faithful Self-RAG benchmark would require the fine-tuning resources outside this study's scope.
-
-## #1 ranking distribution (7-system comparison)
-
-| Rank | System | #1 wins | Share |
-|---|---|---|---|
-| 🥇 1 | **naive_rag** | 11/34 | 32% |
-| 🥈 2 | **v12_pipeline** ← OFFICIAL | 10/34 | 29% |
-| 🥉 3 | crag | 7/34 | 21% |
-| 4 | basic_react | 5/34 | 15% |
-| 5 | adaptive_simple | 2/34 | 6% |
-| 5 | flare | 2/34 | 6% |
-| 5 | hyde | 2/34 | 6% |
-
-naive_rag's lead comes from trivially extractive RAGAS metrics (faithfulness, answer_relevancy, context_precision) where copy-paste from a single chunk achieves near-perfect entailment — a structural bias against synthesis-based multi-hop systems documented in the RAG evaluation literature.
-
-**v12 dominates the metrics that matter for the task**: dialect support, multi-hop reasoning, out-of-scope abstention. It is the only system that combines RAGAS-compliant grounding (0.855 faithfulness) with these agentic capabilities.
 
 ## Regenerating the table
 

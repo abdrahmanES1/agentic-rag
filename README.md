@@ -15,13 +15,13 @@ The official publication results are in [**`benchmarking/results/FINAL/`**](benc
 
 ### Headline
 
-**v12 ranks #1 on 10 of 34 metrics** in a 7-system comparison, and is the **only system** that scores above zero on three core agentic capabilities:
+**v12 ranks #1 on 14 of 34 metrics** in a 7-system comparison — **the most of any system** — and is the **only system** that scores above zero on three core agentic capabilities:
 
 | Capability | v12 | Best Baseline |
 |---|---|---|
-| Multi-hop reasoning success | **0.667** | 0.000 |
-| Out-of-scope abstention F1 | **0.538** | 0.000 |
-| Moroccan Arabizi handling F1 | **0.303** | 0.034 (9× worse) |
+| Multi-hop reasoning success | **0.500** | 0.000 |
+| Out-of-scope abstention F1 | **0.667** | 0.000 |
+| Moroccan Arabizi handling F1 | **0.289** | 0.034 (8× worse) |
 
 ## 🏗️ Architecture
 
