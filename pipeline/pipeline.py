@@ -197,8 +197,12 @@ class MoroccanRAGPipeline:
             raise RuntimeError("Call setup() and build_knowledge_base() first.")
         t0 = time.time()
 
-        # ── Steps 4+5: Language + MSA translation + intents (agentic, one call) ─
-        language, confidence, msa_query, llm_intents = detect_and_translate(question, self.ollama)
+        # ── Steps 4+5+6: ONE agentic LLM call returns language + translation +
+        # intents + needs_multihop + is_legal + is_outscope. Replaces all the
+        # previous keyword/regex lists (INTENT_RULES, detect_multihop patterns,
+        # check_outscope_keywords, check_legal_keywords) with a single
+        # semantic decision from the LLM.
+        language, confidence, msa_query, llm_signals = detect_and_translate(question, self.ollama)
         log.info(f"  Language: {language} (conf={confidence:.2f})")
 
         retrieval_query = question
@@ -208,9 +212,9 @@ class MoroccanRAGPipeline:
             translation_used = True
             log.info(f"  Query translated: {question[:50]} → {msa_query[:50]}")
 
-        # ── Step 6: Classify question (agentic intents from the same call) ────
+        # Build flags from the LLM signals (no second LLM call, no keyword rules)
         flags = classify_question(retrieval_query, language, confidence, self.ollama,
-                                  llm_intents=llm_intents)
+                                  llm_signals=llm_signals)
         log.info(f"  Flags: {flags.summary()}")
 
         if flags.OUTSCOPE:
