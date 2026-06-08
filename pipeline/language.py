@@ -187,29 +187,58 @@ def detect_language(question: str) -> Tuple[str, float]:
 # ── Agentic LLM detect + translate ────────────────────────────────────────────
 
 _LLM_INTENTS = ["DOCUMENTS", "PROCEDURE", "COST", "DEADLINE", "ELIGIBILITY", "LEGAL", "COMPARISON"]
+
+# ── Agentic classification schema ─────────────────────────────────────────────
+# ALL semantic routing decisions are made by the LLM in ONE call. Replaces:
+#   - INTENT_RULES (6 keyword lists × proclitic-aware regex)
+#   - detect_multihop (10 pattern lists, 5-signal voting ensemble)
+#   - check_outscope_keywords (2 keyword lists — caught 0/15 real OOS items)
+#   - check_legal_keywords (2 keyword lists — over-fired on procedural questions)
+#   - DARIJA_MARKERS / ARABIZI_MARKERS / MSA_KEYWORDS / FRENCH_KEYWORDS
+# The LLM does what semantic understanding requires; deterministic checks are
+# kept only for Unicode-range script discrimination (a structural fact, not a
+# heuristic word list).
 _LANG_SCHEMA = {
     "type": "object",
     "properties": {
-        "language": {"type": "string", "enum": ["Darija", "Arabizi", "arabic_msa", "french"]},
-        "msa": {"type": "string"},
-        "intents": {"type": "array", "items": {"type": "string", "enum": _LLM_INTENTS}},
+        "language":        {"type": "string", "enum": ["Darija", "Arabizi", "arabic_msa", "french"]},
+        "msa":             {"type": "string"},
+        "intents":         {"type": "array", "items": {"type": "string", "enum": _LLM_INTENTS}},
+        "needs_multihop":  {"type": "boolean"},
+        "is_legal":        {"type": "boolean"},
+        "is_outscope":     {"type": "boolean"},
     },
-    "required": ["language", "msa", "intents"],
+    "required": ["language", "msa", "intents", "needs_multihop", "is_legal", "is_outscope"],
 }
 _LANG_SYS = (
-    "You analyze Moroccan public-service questions. Return JSON with three fields:\n"
+    "You analyze Moroccan public-service questions. Return JSON with 6 fields.\n\n"
     "1. \"language\" — EXACTLY one of:\n"
     "   - \"Darija\": Moroccan colloquial Arabic in ARABIC script (شنو، واش، بغيت، خاصني، اللي، ديال، فين، شحال)\n"
     "   - \"Arabizi\": Moroccan colloquial Arabic ROMANIZED in Latin letters, often with digits "
     "3=ع 7=ح 9=ق 2=ء (achno, khassni, bach, 3lach, nna9l, ada2, dyal). Latin letters with Arabic words/digits "
     "= Arabizi, NOT french.\n"
     "   - \"arabic_msa\": Modern Standard (formal) Arabic in Arabic script\n"
-    "   - \"french\": standard French\n"
-    "2. \"msa\" — a Modern Standard Arabic translation if Darija/Arabizi, otherwise the question verbatim\n"
-    "3. \"intents\" — ALL that the question asks about: DOCUMENTS (papers/وثائق/أوراق needed), "
-    "PROCEDURE (steps), COST (fees/price), DEADLINE (duration/time), ELIGIBILITY (who qualifies), "
-    "LEGAL (penalties), COMPARISON\n"
-    "Output JSON only."
+    "   - \"french\": standard French\n\n"
+    "2. \"msa\" — Modern Standard Arabic translation if Darija/Arabizi, otherwise question verbatim.\n\n"
+    "3. \"intents\" — ALL aspects the question asks about (subset of):\n"
+    "   DOCUMENTS (papers/وثائق/أوراق required), PROCEDURE (steps to follow), COST (fees/price),\n"
+    "   DEADLINE (duration/time), ELIGIBILITY (who qualifies), LEGAL (sanctions/penalties), COMPARISON.\n\n"
+    "4. \"needs_multihop\" — TRUE ONLY if the question requires combining information from MULTIPLE\n"
+    "   distinct administrative procedures, or comparing two different services.\n"
+    "   FALSE when asking about multiple aspects (docs+cost+time) of a SINGLE procedure.\n"
+    "   Examples:\n"
+    "     'What documents are required for the national ID?' → FALSE (one procedure)\n"
+    "     'What documents, fees and time for the ID card?' → FALSE (one procedure, three aspects)\n"
+    "     'Difference between LLC and joint-stock company registration?' → TRUE (two procedures)\n"
+    "     'What documents to register a company AND pay capital duty?' → TRUE (two procedures)\n\n"
+    "5. \"is_legal\" — TRUE only if the question is about legal sanctions, penalties, prison terms,\n"
+    "   court procedures, or fines for violations. FALSE for administrative questions that merely\n"
+    "   involve legal documents (e.g., 'how to register a company' is NOT is_legal=TRUE).\n\n"
+    "6. \"is_outscope\" — TRUE if the question is unrelated to Moroccan administrative public services\n"
+    "   (sports, entertainment, weather, tourism, recipes, restaurants, hotels, real estate prices,\n"
+    "   personal opinions). FALSE for any administrative/procedural question, even if the specific\n"
+    "   procedure may not be in the knowledge base.\n\n"
+    "Output JSON only — no prose, no explanations."
 )
 
 _ARABIZI_DIGIT_RE = re.compile(r"[a-zA-Z][2379]|[2379][a-zA-Z]")
@@ -269,67 +298,110 @@ def _script_detect(text: str) -> str:
     return "unknown"
 
 
-def _llm_detect_translate(question: str, ollama) -> Tuple[Optional[str], str, list]:
-    """One LLM call → language label + MSA translation + intents."""
+def _llm_classify(question: str, ollama) -> Optional[Dict]:
+    """
+    One LLM call → ALL semantic routing signals.
+
+    Returns dict with keys: language, msa, intents, needs_multihop, is_legal,
+    is_outscope — or None if the LLM call fails or returns invalid JSON.
+
+    This single call replaces 12 fixed keyword/regex lists previously used for
+    intent detection, multihop detection, legal detection, and outscope
+    detection. The LLM does what semantic understanding requires.
+    """
     try:
         resp = ollama.generate(
             [{"role": "system", "content": _LANG_SYS}, {"role": "user", "content": question}],
-            temperature=0.0, max_tokens=450, fmt=_LANG_SCHEMA, think=False,
+            temperature=0.0, max_tokens=600, fmt=_LANG_SCHEMA, think=False,
         )
         if not resp:
-            return None, "", []
+            return None
         resp = re.sub(r"```(?:json)?", "", resp)
         m = re.search(r"\{.*\}", resp, re.DOTALL)
         if not m:
-            return None, "", []
+            return None
         d = json.loads(m.group(0))
         lang = d.get("language")
-        intents = [i for i in (d.get("intents") or []) if i in _LLM_INTENTS]
-        return ((lang if lang in ("Darija", "Arabizi", "arabic_msa", "french") else None),
-                (d.get("msa") or ""), intents)
+        if lang not in ("Darija", "Arabizi", "arabic_msa", "french"):
+            return None
+        return {
+            "language":       lang,
+            "msa":            (d.get("msa") or "").strip(),
+            "intents":        [i for i in (d.get("intents") or []) if i in _LLM_INTENTS],
+            "needs_multihop": bool(d.get("needs_multihop", False)),
+            "is_legal":       bool(d.get("is_legal", False)),
+            "is_outscope":    bool(d.get("is_outscope", False)),
+        }
     except Exception as exc:
-        log.debug("LLM language detect failed: %s", exc)
-        return None, "", []
+        log.debug("LLM classify failed: %s", exc)
+        return None
 
 
-def detect_and_translate(question: str, ollama=None) -> Tuple[str, float, Optional[str], Optional[list]]:
+def detect_and_translate(question: str, ollama=None) -> Tuple[str, float, Optional[str], Optional[Dict]]:
     """
     Agentic language understanding in ONE step:
-    returns (language, confidence, msa_query_or_None, llm_intents_or_None).
+    returns (language, confidence, msa_query_or_None, llm_signals_or_None).
 
-    LLM-first — gemma reliably tells Arabizi from French (which the ar/fr-only
-    ensemble structurally cannot) and identifies intents directly (no brittle
-    keyword lists) — with a deterministic Arabizi digit-override and a
-    keyword/ensemble fallback when the LLM is unavailable.
+    The LLM returns ALL semantic routing signals (intents, needs_multihop,
+    is_legal, is_outscope) in a single structured call. Unicode-range script
+    detection is kept ONLY as:
+      (a) safe default when LLM unavailable, and
+      (b) override when LLM's language label disagrees with the obvious script
+          (e.g., labelling Latin text as arabic_msa is impossible by definition).
+
+    `llm_signals` is the full dict from _llm_classify, or None if LLM
+    unavailable — callers pass it to classify_question to build QuestionFlags
+    without any keyword-list lookups.
     """
     text = (question or "").strip()
     if not text:
         return "unknown", 0.0, None, None
 
-    # ── Language LABEL: deterministic script + markers (96.8% vs the 4B LLM's
-    # 30%). Script is the right signal for the orthographic label; the LLM is
-    # reserved for the SEMANTIC work below (translation + intents).
-    lang = _script_detect(text)
-    if lang == "unknown":
-        lang = "arabic_msa"  # safe default (Arabic-script corpus)
+    # ── Default language label from script (Unicode fact, used as safety net) ──
+    lang_script = _script_detect(text)
+    if lang_script == "unknown":
+        lang_script = "arabic_msa"  # safe default (Arabic-script corpus)
 
+    if ollama is None:
+        # No LLM available → return script-based label with no semantic signals
+        return lang_script, 0.5, None, None
+
+    # ── Agentic: LLM returns ALL signals in one call ─────────────────────────
+    signals = _llm_classify(question, ollama)
+    if signals is None:
+        # LLM failed → fall back to script label with no signals (caller will
+        # use safe defaults: is_multihop=False, is_legal=False, is_outscope=False).
+        return lang_script, 0.5, None, None
+
+    # ── Reconcile LLM language with script fact ──────────────────────────────
+    lang = signals["language"]
+    # Latin script + Arabizi digits is unambiguously Arabizi — override any
+    # contradictory LLM label. Pure script discrimination is a Unicode fact.
+    if _is_latin_script(text):
+        if _has_arabizi_digits(text):
+            lang = "Arabizi"
+        elif lang in ("Darija", "arabic_msa"):
+            # LLM said Arabic-script variety but text is Latin — clearly wrong
+            lang = "Arabizi" if lang_script == "Arabizi" else "french"
+    else:
+        # Arabic-script text — LLM shouldn't return Latin labels here
+        if lang in ("Arabizi", "french"):
+            lang = lang_script if lang_script in ("Darija", "arabic_msa") else "arabic_msa"
+
+    # ── MSA translation for retrieval (Darija/Arabizi only) ─────────────────
     msa_out: Optional[str] = None
-    intents: Optional[list] = None
+    if lang in ("Darija", "Arabizi"):
+        cand = signals["msa"]
+        if cand and not _is_latin_script(cand):
+            msa_out = cand
+        else:
+            # LLM didn't translate or returned Latin — translate explicitly
+            msa_out = translate_to_msa(question, lang, ollama) or None
 
-    if ollama is not None:
-        # LLM does translation + intent extraction (NOT the language label).
-        _, msa, llm_intents = _llm_detect_translate(question, ollama)
-        intents = llm_intents or None
-        if lang in ("Darija", "Arabizi"):
-            cand = (msa or "").strip()
-            # accept the LLM's translation only if it is real Arabic-script MSA;
-            # otherwise translate explicitly so retrieval gets a clean MSA query.
-            if cand and not _is_latin_script(cand):
-                msa_out = cand
-            else:
-                msa_out = translate_to_msa(question, lang, ollama) or None
+    # Update signals with the reconciled language so downstream code sees one consistent value
+    signals["language"] = lang
 
-    return lang, 0.9, msa_out, intents
+    return lang, 0.9, msa_out, signals
 
 
 def translate_to_msa(query: str, source_lang: str, ollama) -> Optional[str]:
@@ -399,58 +471,70 @@ def _intent_kw_hit(keywords, text: str, text_lower: str) -> bool:
 
 
 def classify_question(question: str, language: str, confidence: float, ollama=None,
-                      llm_intents=None):
+                      llm_intents=None, llm_signals=None):
     """
-    Classify question into QuestionFlags (SIMPLE/MULTIHOP/LEGAL/OUTSCOPE + intents).
+    Build QuestionFlags from the LLM's structured classification.
 
-    Called after language detection. `llm_intents`, when provided by the agentic
-    detect+translate step, replaces the brittle keyword INTENT_RULES (those miss
-    dialect words like أوراق/lwaraq); the keyword rules remain as a fallback.
+    The LLM call in detect_and_translate returns `llm_signals` (dict with
+    intents, needs_multihop, is_legal, is_outscope). This function turns that
+    dict into a QuestionFlags object. No keyword lists, no regex patterns —
+    all semantic decisions come from the LLM.
+
+    Backward compatibility:
+      - `llm_intents` (list) — old caller signature; treated as a partial
+        signals dict.
+      - When llm_signals is None and ollama is provided, this function will
+        invoke the LLM itself (one call) to get the signals.
+
+    Safe defaults when the LLM is unavailable: is_simple=True, is_legal=False,
+    is_outscope=False, intents=["DOCUMENTS"]. These defaults are safer than
+    keyword rules because:
+      - The previous keyword-based OOS detection caught 0/15 actual OOS items
+      - The previous keyword-based intent detection over-fired (3+ intents
+        on SIMPLE-category questions, forcing unnecessary multi-hop routing)
     """
     from pipeline.models import QuestionFlags
 
-    q_lower = question.lower()
+    # ── Acquire LLM signals (if needed) ──────────────────────────────────────
+    if llm_signals is None and llm_intents is None and ollama is not None:
+        llm_signals = _llm_classify(question, ollama)
 
-    is_outscope = check_outscope_keywords(question)
-    is_legal = check_legal_keywords(question)
-    is_multihop, _conf, _signals, hop_count = detect_multihop(question)
+    # Support old API: llm_intents is just a list → convert to signals dict
+    if llm_signals is None and llm_intents is not None:
+        llm_signals = {
+            "intents": [i for i in llm_intents if i in _LLM_INTENTS],
+            "needs_multihop": False,
+            "is_legal": False,
+            "is_outscope": False,
+        }
 
-    # Intent detection: UNION the LLM's intents with deterministic keyword rules.
-    # The LLM under-detects on compound dialect questions (e.g. it returned only
-    # PROCEDURE for a docs+cost+deadline question), so keyword rules — including
-    # Darija/Arabizi markers — recover the missed intents. Rules run on `question`,
-    # which is the MSA-translated query for dialects, AND on dialect surface forms.
-    INTENT_RULES = [
-        ("PROCEDURE", ["إجراء", "خطوات", "طريقة", "كيفية", "procédure", "étapes",
-                       "comment faire", "démarche", "kifach", "kifash", "kif ndir"]),
-        ("COST",      ["رسوم", "تكلفة", "سعر", "ثمن", "درهم", "frais", "coût", "prix",
-                       "tarif", "dirhams", "taman", "tmn", "flous", "flos", "bchhal", "bch7al"]),
-        ("DEADLINE",  ["مدة", "أجل", "وقت", "متى", "délai", "durée", "jours", "semaines",
-                       "date limite", "lwaqt", "waqt", "lmodda", "lmoda", "wqt", "chhal d lwaqt"]),
-        ("ELIGIBILITY", ["شروط", "أهلية", "يحق", "من يستفيد", "conditions", "éligibilité",
-                         "qui peut", "bénéficier", "chroot", "chkon y9der"]),
-        ("LEGAL",     LEGAL_KEYWORDS_AR + LEGAL_KEYWORDS_FR),
-        ("DOCUMENTS", ["وثيقة", "وثائق", "أوراق", "ورقة", "ملف", "مستند", "document",
-                       "pièce", "dossier", "formulaire", "lwaraq", "lwra9", "wra9", "waraq", "papiers"]),
-    ]
-    kw_intents = [intent for intent, keywords in INTENT_RULES
-                  if _intent_kw_hit(keywords, question, q_lower)]
-
-    if llm_intents:
-        llm = [i for i in llm_intents if i in _LLM_INTENTS]
-        # union (LLM order first, then keyword-recovered intents), de-duplicated
-        intents = list(dict.fromkeys(llm + kw_intents))
+    # ── Build flags from LLM signals (or safe defaults) ─────────────────────
+    if llm_signals:
+        intents     = list(dict.fromkeys(llm_signals.get("intents") or []))
+        is_multihop = bool(llm_signals.get("needs_multihop", False))
+        is_legal    = bool(llm_signals.get("is_legal", False))
+        is_outscope = bool(llm_signals.get("is_outscope", False))
     else:
-        intents = kw_intents
+        intents     = []
+        is_multihop = False
+        is_legal    = False
+        is_outscope = False
 
-    if is_legal and "LEGAL" not in intents:
-        intents.append("LEGAL")
-    if not intents:
-        intents = ["DOCUMENTS"]
+    # OOS supersedes everything else
     if is_outscope:
         intents = ["OUT_OF_SCOPE"]
+    else:
+        if is_legal and "LEGAL" not in intents:
+            intents.append("LEGAL")
+        if not intents:
+            intents = ["DOCUMENTS"]   # safe fallback if LLM returned no intents
 
-    is_simple = not is_multihop and not is_legal and len(intents) <= 1
+    # Routing decision: SIMPLE if the LLM said the question covers ONE procedure
+    # (not multihop) AND is not legal. Intent count is NOT used — multi-aspect
+    # single-procedure questions stay simple per the LLM's semantic judgement.
+    is_simple = (not is_multihop) and (not is_legal) and (not is_outscope)
+
+    hop_count = 1 if is_simple else max(1, min(len(intents), 4))
 
     return QuestionFlags(
         SIMPLE=is_simple,

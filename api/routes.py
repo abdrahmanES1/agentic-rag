@@ -202,13 +202,13 @@ def register_routes(app: Flask, pipeline: MoroccanRAGPipeline) -> None:
             return jsonify({"error": "Missing question"}), 400
 
         try:
-            language, confidence, msa, llm_intents = detect_and_translate(q, pipeline.ollama)
+            language, confidence, msa, llm_signals = detect_and_translate(q, pipeline.ollama)
             rq = q
             translated = False
             if language in ("Darija", "Arabizi") and msa and settings.enable_query_translation:
                 rq, translated = msa, True
 
-            flags = classify_question(rq, language, confidence, pipeline.ollama, llm_intents=llm_intents)
+            flags = classify_question(rq, language, confidence, pipeline.ollama, llm_signals=llm_signals)
 
             if flags.OUTSCOPE:
                 return jsonify(
