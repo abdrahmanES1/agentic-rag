@@ -685,8 +685,15 @@ class PlannerAgent:
             else:
                 step_chunks = self.memory.get_top_chunks(settings.compress_top_n)
 
-            state.evidence[intent] = step_chunks
-            log.info(f"  → {len(step_chunks)} chunks retrieved")
+            # Fix E: append to evidence (don't overwrite) so compound questions
+            # where the same intent appears in multiple plan steps retain ALL
+            # accumulated evidence, deduplicated by chunk_id.
+            existing = state.evidence.get(intent, [])
+            existing_ids = {getattr(c, "chunk_id", id(c)) for c in existing}
+            new_unique = [c for c in step_chunks
+                          if getattr(c, "chunk_id", id(c)) not in existing_ids]
+            state.evidence[intent] = existing + new_unique
+            log.info(f"  → {len(step_chunks)} chunks retrieved, {len(new_unique)} new for {intent}")
 
             prior = [(i, state.facts.get(i, "")) for i in list(state.facts.keys())]
             intermediate = self._generate_intermediate(sub_q, intent, step_chunks, prior, flags.language)
@@ -985,9 +992,12 @@ class PlannerAgent:
             if intent in intent_sections
         )
 
-        # Pass the full retrieved evidence so synthesis can extract the answer
-        # even when an individual hop's partial answer came back empty/refused.
-        retrieved_context = self.memory.build_context()
+        # Fix D: Pass FULL retrieved evidence (up to memory_max_chunks=12) so
+        # synthesis can use chunks from ALL multi-hop steps, not just the top 5
+        # by RRF score. Multi-hop chunks added later get lower rrf_score than
+        # initial retrieval, so the default top-5 would silently drop hop-2/3
+        # evidence even though the agent worked hard to retrieve it.
+        retrieved_context = self.memory.build_context(max_chunks=settings.memory_max_chunks)
         prompt = synthesis_prompt(question, facts_context, section_instructions, language, retrieved_context)
         try:
             answer = self.ollama.generate(
@@ -1010,7 +1020,10 @@ class PlannerAgent:
     def _generate_direct(self, question: str, flags: QuestionFlags, state: AgentState) -> str:
         if self.memory.size() == 0:
             return self._get_abstain(flags.language)
-        context = self.memory.build_context()
+        # Fix D (direct): use full memory (up to memory_max_chunks=12) for
+        # simple-path generation too — even on simple questions, the initial
+        # retrieval gets 5 chunks and the LLM benefits from seeing more.
+        context = self.memory.build_context(max_chunks=settings.memory_max_chunks)
         if len(context.split()) < 20:
             return self._get_abstain(flags.language)
 
@@ -1044,8 +1057,12 @@ class PlannerAgent:
             return self._get_not_found(intent, language)
 
         from pipeline.prompts import intermediate_generation_prompt
+        # Fix B: use up to 5 chunks (was 3) with NO text truncation (was [:400])
+        # to give the intermediate generation LLM the full evidence needed —
+        # gov procedure chunks often have docs+steps+cost+time in one paragraph
+        # and 400-char truncation was cutting the relevant part of the answer.
         chunk_context = "\n\n".join(
-            f"[Source: {short_source(c.source)} | Page: {c.page}]\n{c.text[:400]}" for c in chunks[:3]
+            f"[Source: {short_source(c.source)} | Page: {c.page}]\n{c.text}" for c in chunks[:5]
         )
         prior_context = ""
         if prior:
