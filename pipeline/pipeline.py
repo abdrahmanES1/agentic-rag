@@ -29,7 +29,7 @@ from sentence_transformers import CrossEncoder, SentenceTransformer
 from pipeline.config import settings
 from pipeline.generation import AgentMemory, OllamaClient, PlannerAgent
 from pipeline.knowledge_base import KnowledgeBase
-from pipeline.language import classify_question, detect_and_translate, detect_language, translate_to_msa
+from pipeline.language import classify_question, detect_and_translate, translate_to_msa
 from pipeline.models import PipelineResult, RetrievalResult, ScoredChunk
 from pipeline.retrieval import HybridRetriever
 from pipeline.verification import NLIVerifier, verify_output
@@ -356,10 +356,14 @@ class MoroccanRAGPipeline:
         """Return the AgentPlan for a question without running generation."""
         if not self._ready or self.kb is None:
             raise RuntimeError("Call setup() and build_knowledge_base() first.")
-        from pipeline.language import classify_question, detect_language
+        from pipeline.language import classify_question, detect_and_translate
         from pipeline.models import AgentState
-        language, confidence = detect_language(question)
-        flags = classify_question(question, language, confidence, self.ollama)
+        # Use the fully-agentic detect_and_translate (same as ask()) — the LLM
+        # decides language + intents + multihop + legal + outscope in one call.
+        # The previous rule-based detect_language is dead code (only kept for
+        # the deprecated 5-signal ensemble fallback).
+        language, confidence, _msa, signals = detect_and_translate(question, self.ollama)
+        flags = classify_question(question, language, confidence, self.ollama, llm_signals=signals)
         agent = PlannerAgent(self.ollama, self._retriever)
         state = AgentState(language=flags.language)
         return flags, language, agent._plan(question, flags, state)

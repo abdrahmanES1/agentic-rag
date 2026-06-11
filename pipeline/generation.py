@@ -703,12 +703,12 @@ class PlannerAgent:
                 last_tc.intermediate_answer = intermediate
                 last_tc.reflection = reflection
 
-            if (
-                "partial" in reflection.lower()
-                or "insufficient" in reflection.lower()
-                or "incomplet" in reflection.lower()
-                or "manque" in reflection.lower()
-            ):
+            # Reflection trigger: use STRUCTURED status from _reflect (returns one of
+            # "complete" | "partial" | "not_found" via JSON schema). Trigger adaptive
+            # re-retrieval ONLY on "partial" or "not_found". Removed the keyword
+            # fallback (kw in reflection.lower() for partial/insufficient/incomplet/
+            # manque) since the LLM always returns a structured status now.
+            if reflection.strip().lower() in ("partial", "not_found"):
                 if self.steps < settings.max_agent_steps - 1:
                     state.log(f"  → Reflection triggered adaptive retrieval for {intent}")
                     rephrased = self._rephrase_for_retry(sub_q, intermediate, flags.language)

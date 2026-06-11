@@ -35,7 +35,7 @@ from pathlib import Path
 
 from flask import Flask, Response, jsonify, request, stream_with_context
 from pipeline.config import settings
-from pipeline.language import classify_question, detect_and_translate, detect_language, translate_to_msa
+from pipeline.language import classify_question, detect_and_translate, translate_to_msa
 from pipeline.models import QuestionFlags
 from pipeline.pipeline import MoroccanRAGPipeline
 

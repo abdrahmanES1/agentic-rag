@@ -1,190 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Step 4 & 5 — Language detection and query translation.
+Step 4 & 5 — Language detection, query translation, and question classification.
 
-5-signal ensemble (Darija/Arabizi first):
-  Signal 1 — Darija markers
-  Signal 2 — Arabizi markers
-  Signal 3 — Script ratio (Arabic vs Latin)
-  Signal 4 — Domain keyword lists (MSA / French)
-  Signal 5 — ML detectors (Lingua, langdetect, langid)
+Fully agentic: one LLM call returns ALL semantic routing signals (language,
+translation, intents, needs_multihop, is_legal, is_outscope). Twelve fixed
+keyword/regex lists previously used for heuristic detection have been removed
+in favor of LLM-based semantic decisions.
+
+Kept (deterministic structural facts, NOT semantic heuristics):
+  - Unicode-range script detection ('؀' <= c <= 'ۿ')
+  - Arabizi digit-letter pattern ([a-zA-Z][2379])
+  These remain as safety nets when the LLM is unavailable or contradicts the
+  obvious orthographic script.
 """
 
 import json
 import logging
 import re
-from collections import defaultdict
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, Optional, Tuple
 
 from pipeline.config import settings
 
 log = logging.getLogger("MoroccanRAG")
 
-# ── Optional ML detectors ─────────────────────────────────────────────────────
 
-try:
-    from langdetect import DetectorFactory, detect_langs
-    DetectorFactory.seed = 42
-    LANGDETECT_AVAILABLE = True
-except ImportError:
-    LANGDETECT_AVAILABLE = False
-
-try:
-    import langid
-    langid.set_languages(["ar", "fr"])
-    LANGID_AVAILABLE = True
-except ImportError:
-    LANGID_AVAILABLE = False
-
-try:
-    from lingua import Language, LanguageDetectorBuilder
-    LINGUA_DETECTOR = (
-        LanguageDetectorBuilder.from_languages(Language.ARABIC, Language.FRENCH)
-        .with_preloaded_language_models()
-        .build()
-    )
-    LINGUA_AVAILABLE = True
-except ImportError:
-    LINGUA_AVAILABLE = False
-
-# ── Marker sets ───────────────────────────────────────────────────────────────
-
-DARIJA_MARKERS: Set[str] = {
-    "واش", "ماشي", "بزاف", "كيف", "فين", "شحال", "علاش", "درابا", "دابا",
-    "غادي", "كاين", "كاينة", "بغيت", "بغا", "مزيان", "كنت", "كنقول",
-    "كنشوف", "كندير", "كنبغي", "راه", "راك", "راها", "ياللاه", "زوين",
-    "بصح", "ماعنديش", "خاصني", "خاصك", "ماكاينش",
-}
-
-ARABIZI_MARKERS: Set[str] = {
-    "chkoun", "kifach", "kifash", "ndir", "khass", "bghit", "bghiti",
-    "wach", "3lach", "3lah", "bzaf", "bezzaf", "daba", "draba", "ghadi",
-    "kayen", "kayna", "mzyan", "zwine", "machi", "wallah", "yallah",
-    "bsa7", "mchi", "sir",
-}
-
-# ── Domain keyword lists ───────────────────────────────────────────────────────
-
-MSA_KEYWORDS = [
-    "ما هي", "ما هو", "كيف يمكن", "كيف أحصل", "متى يمكن",
-    "الوثائق المطلوبة", "الإجراءات", "للحصول على", "مدة الإنجاز", "الرسوم",
-]
-FRENCH_KEYWORDS = [
-    "comment", "quels", "quelle", "quelles", "documents", "procédure",
-    "dossier", "formulaire", "carte nationale", "permis", "acte",
-    "certificat", "délai", "frais", "pièces justificatives",
-]
-
-OUTSCOPE_KEYWORDS_AR = [
-    "كرة القدم", "مباراة كرة", "نتيجة مباراة", "ترتيب الفرق",
-    "فيلم سينمائي", "مسلسل تلفزيوني", "أغنية", "موسيقى", "وصفة طبخ",
-]
-OUTSCOPE_KEYWORDS_FR = [
-    "match de football", "résultat sportif", "classement équipe",
-    "film cinéma", "série télévisée", "recette cuisine", "chanteur",
-    "chanson", "restaurant", "meilleur restaurant", "hôtel", "hébergement",
-    "tourisme", "voyage", "vacances", "météo", "température",
-    "prix immobilier", "loyer",
-]
-LEGAL_KEYWORDS_AR = [
-    "حكم بالسجن", "السجن", "الاعتقال", "المحكمة الجنائية",
-    "النيابة العامة", "جريمة جنائية", "جنحة", "إدانة جنائية",
-    "عقوبة جنائية", "غرامة جنائية",
-]
-LEGAL_KEYWORDS_FR = [
-    "peine d'emprisonnement", "prison", "tribunal correctionnel",
-    "procureur", "infraction pénale", "condamnation pénale",
-    "casier judiciaire", "amende pénale",
-]
-
-# ── Multi-hop / intent detection patterns ────────────────────────────────────
-
-AR_QUESTION_WORDS = {"ما", "ماذا", "من", "كيف", "متى", "إمتى", "أين", "فين", "لماذا", "كم", "شحال", "هل", "واش", "أي"}
-FR_QUESTION_WORDS = {"comment", "quels", "quelle", "quelles", "quel", "quand", "où", "pourquoi", "combien", "qui", "que"}
-AR_CONJUNCTIVE_PATTERNS = [r"و\s*(كم|ما|كيف|أين|متى|هل|من|لماذا|أي)", r"وكذلك\s", r"وأيضا\s", r"فضلا\s+عن\s+ذلك", r"ثم\s+(ما|كيف|أين|كم|هل)"]
-FR_CONJUNCTIVE_PATTERNS = [r"et\s+(comment|quels?|quelle|quand|où|combien|qui|pourquoi)", r"ainsi\s+que", r"de\s+plus", r"également"]
-AR_COMPARISON_PATTERNS = [r"الفرق\s+بين", r"مقارنة\s+بين", r"\bأم\b", r"الأفضل\s+بين"]
-FR_COMPARISON_PATTERNS = [r"différence\s+entre", r"comparaison\s+entre", r"ou\s+bien\b", r"plutôt\s+que", r"versus\b"]
-AR_ENUMERATION_PATTERNS = [r"(الوثائق|الشروط|الخطوات).{0,30}(الرسوم|المدة|المكان|الإجراءات)"]
-FR_ENUMERATION_PATTERNS = [r"(documents|conditions|étapes).{0,40}(frais|délai|lieu|procédure)"]
-AR_MULTI_ENTITY_PATTERNS = [r"(البطاقة|الجواز|الرخصة|الشهادة).{2,40}(و|أو).{2,40}(البطاقة|الجواز|الرخصة|الشهادة)"]
-FR_MULTI_ENTITY_PATTERNS = [r"(carte|passeport|permis|certificat).{2,50}(et|ou).{2,50}(carte|passeport|permis|certificat)"]
-
-
-# ── Public API ────────────────────────────────────────────────────────────────
-
-
-def detect_language(question: str) -> Tuple[str, float]:
-    """
-    5-signal ensemble language detection.
-    Returns (language, confidence).
-    language in: "Darija" | "Arabizi" | "arabic_msa" | "french" | "mixed" | "unknown"
-    """
-    text = question.strip()
-    if not text:
-        return "unknown", 0.0
-
-    # Signal 1: Darija markers (highest priority)
-    if settings.enable_darija:
-        darija_count = sum(1 for m in DARIJA_MARKERS if m in text)
-        if darija_count >= settings.darija_marker_min:
-            conf = min(0.85 + (darija_count - settings.darija_marker_min) * 0.03, 0.95)
-            log.info(f"  Language: Darija ({darija_count} markers, conf={conf:.2f})")
-            return "Darija", conf
-
-    # Signal 2: Arabizi markers
-    if settings.enable_arabizi:
-        arabizi_count = sum(1 for m in ARABIZI_MARKERS if m.lower() in text.lower())
-        if arabizi_count >= settings.arabizi_marker_min:
-            conf = min(0.80 + (arabizi_count - settings.arabizi_marker_min) * 0.03, 0.92)
-            log.info(f"  Language: Arabizi ({arabizi_count} markers, conf={conf:.2f})")
-            return "Arabizi", conf
-
-    # Signals 3-5: weighted ensemble
-    votes: Dict[str, float] = defaultdict(float)
-
-    s1_lang, s1_conf = _detect_by_script(text)
-    if s1_lang != "unknown":
-        votes[s1_lang] += 1.0 * s1_conf
-
-    s2_lang, s2_conf = _detect_by_keywords(text)
-    if s2_lang != "unknown":
-        votes[s2_lang] += 1.5 * s2_conf
-
-    if LINGUA_AVAILABLE:
-        s3_lang, s3_conf = _detect_by_lingua(text)
-        if s3_lang != "unknown":
-            votes[s3_lang] += 2.0 * s3_conf
-
-    if LANGDETECT_AVAILABLE:
-        s4_lang, s4_conf = _detect_by_langdetect(text)
-        if s4_lang != "unknown":
-            votes[s4_lang] += 1.0 * s4_conf
-
-    if LANGID_AVAILABLE:
-        s5_lang, s5_conf = _detect_by_langid(text)
-        if s5_lang != "unknown":
-            votes[s5_lang] += 1.0 * s5_conf
-
-    if not votes:
-        return "arabic_msa", 0.3
-
-    total_weight = sum(votes.values())
-    final_lang = max(votes, key=votes.get)
-    confidence = votes[final_lang] / total_weight if total_weight > 0 else 0.5
-
-    if votes.get("arabic_msa", 0) > 0 and votes.get("french", 0) > 0:
-        ar_share = votes["arabic_msa"] / total_weight
-        fr_share = votes["french"] / total_weight
-        if 0.25 < ar_share < 0.75 and 0.25 < fr_share < 0.75:
-            final_lang = "mixed"
-            confidence = min(ar_share, fr_share) * 2
-
-    log.info(f"  Language: {final_lang} (conf={confidence:.2f})")
-    return final_lang, confidence
-
-
-# ── Agentic LLM detect + translate ────────────────────────────────────────────
+# ── Agentic LLM classification ───────────────────────────────────────────────
 
 _LLM_INTENTS = ["DOCUMENTS", "PROCEDURE", "COST", "DEADLINE", "ELIGIBILITY", "LEGAL", "COMPARISON"]
 
@@ -223,21 +63,46 @@ _LANG_SYS = (
     "3. \"intents\" — ALL aspects the question asks about (subset of):\n"
     "   DOCUMENTS (papers/وثائق/أوراق required), PROCEDURE (steps to follow), COST (fees/price),\n"
     "   DEADLINE (duration/time), ELIGIBILITY (who qualifies), LEGAL (sanctions/penalties), COMPARISON.\n\n"
-    "4. \"needs_multihop\" — TRUE ONLY if the question requires combining information from MULTIPLE\n"
-    "   distinct administrative procedures, or comparing two different services.\n"
-    "   FALSE when asking about multiple aspects (docs+cost+time) of a SINGLE procedure.\n"
+    "4. \"needs_multihop\" — TRUE in ANY of these cases:\n"
+    "   (a) COMPARING two procedures or services ('difference between A and B',\n"
+    "       'A versus B', 'better between A and B')\n"
+    "   (b) Two distinct administrative ACTIONS connected by 'and'/'also'/'then'\n"
+    "       (e.g., 'register a company AND pay capital duty', 'get a certificate\n"
+    "       AND open an account', 'file an appeal AND modify the data')\n"
+    "   (c) Question mentions TWO distinct procedure names (registration + payment,\n"
+    "       authorization + license, declaration + amendment, X procedure + Y procedure)\n"
+    "   (d) Compound questions about prerequisites + main procedure\n"
+    "       ('what do I need to do BEFORE doing X to also do Y')\n"
+    "   FALSE ONLY when asking multiple aspects (documents, cost, time, eligibility) of ONE procedure.\n"
     "   Examples:\n"
-    "     'What documents are required for the national ID?' → FALSE (one procedure)\n"
-    "     'What documents, fees and time for the ID card?' → FALSE (one procedure, three aspects)\n"
-    "     'Difference between LLC and joint-stock company registration?' → TRUE (two procedures)\n"
-    "     'What documents to register a company AND pay capital duty?' → TRUE (two procedures)\n\n"
+    "     'What documents for national ID?' → FALSE (one procedure)\n"
+    "     'What documents, cost and time for ID card?' → FALSE (one procedure, three aspects)\n"
+    "     'Difference between LLC and joint-stock registration?' → TRUE (case a)\n"
+    "     'Documents to register a company AND pay capital duty?' → TRUE (case b — register + pay)\n"
+    "     'Steps to register company AND get tax ID?' → TRUE (case b — two actions)\n"
+    "     'What is needed to extend X certificate AND modify Y data?' → TRUE (case b)\n\n"
     "5. \"is_legal\" — TRUE only if the question is about legal sanctions, penalties, prison terms,\n"
     "   court procedures, or fines for violations. FALSE for administrative questions that merely\n"
     "   involve legal documents (e.g., 'how to register a company' is NOT is_legal=TRUE).\n\n"
-    "6. \"is_outscope\" — TRUE if the question is unrelated to Moroccan administrative public services\n"
-    "   (sports, entertainment, weather, tourism, recipes, restaurants, hotels, real estate prices,\n"
-    "   personal opinions). FALSE for any administrative/procedural question, even if the specific\n"
-    "   procedure may not be in the knowledge base.\n\n"
+    "6. \"is_outscope\" — TRUE when the question is NOT about a standard Moroccan public-service procedure\n"
+    "   that would be in an official government KB. Set TRUE for:\n"
+    "   (a) Off-domain topics: sports, entertainment, weather, tourism, recipes, restaurants,\n"
+    "       hotels, real estate prices, personal opinions\n"
+    "   (b) Domain-adjacent BUT non-standard procedures: APPEAL/REVIEW procedures for specific\n"
+    "       rejection decisions, EXEMPTION requests from standard rules, EXTENSION of\n"
+    "       expired/special certificates, NICHE utility connections (natural gas, fiber to\n"
+    "       commercial premises), procedures for VERY SPECIFIC edge cases not covered by\n"
+    "       standard administrative manuals\n"
+    "   (c) Questions about specific decree NUMBERS or LEGAL REFERENCES whose answer\n"
+    "       requires deep legal lookup beyond procedural KB\n"
+    "   FALSE only for COMMON, STANDARD administrative procedures (ID card, passport, civil\n"
+    "   registry, common business registration, common permits) that any government KB would have.\n"
+    "   Examples:\n"
+    "     'What documents for ID card?' → FALSE (standard, common procedure)\n"
+    "     'Documents to appeal rejection of fee waiver request?' → TRUE (niche appeal procedure)\n"
+    "     'Procedure to extend a special technical approval certificate?' → TRUE (very specific)\n"
+    "     'Documents for natural gas connection to commercial premises?' → TRUE (niche utility)\n"
+    "     'Procedure for football match ticket booking?' → TRUE (off-domain)\n\n"
     "Output JSON only — no prose, no explanations."
 )
 
@@ -433,43 +298,6 @@ def translate_to_msa(query: str, source_lang: str, ollama) -> Optional[str]:
     return None
 
 
-def check_outscope_keywords(question: str) -> bool:
-    q_lower = question.lower()
-    return any(kw in question for kw in OUTSCOPE_KEYWORDS_AR) or any(
-        kw in q_lower for kw in OUTSCOPE_KEYWORDS_FR
-    )
-
-
-def check_legal_keywords(question: str) -> bool:
-    q_lower = question.lower()
-    return any(kw in question for kw in LEGAL_KEYWORDS_AR) or any(
-        kw in q_lower for kw in LEGAL_KEYWORDS_FR
-    )
-
-
-_AR_LETTER = "ء-ي٠-٩"
-# Arabic proclitics that may attach before a stem (article + و/ف/ب/ل/ك …).
-_AR_PROCLITIC = r"(?:بال|وال|فال|كال|لل|ال|و|ف|ب|ل|ك)?"
-
-
-def _intent_kw_hit(keywords, text: str, text_lower: str) -> bool:
-    """
-    True if any keyword is present. Latin keywords use lowercase substring;
-    Arabic keywords use proclitic-aware word boundaries so a fee word (رسوم)
-    does NOT match inside a decree word (مرسوم), nor مدة inside عمدة.
-    """
-    for kw in keywords:
-        if kw.isascii():
-            if kw in text_lower:
-                return True
-        else:
-            pat = (r"(?<![" + _AR_LETTER + r"])" + _AR_PROCLITIC
-                   + re.escape(kw) + r"(?![" + _AR_LETTER + r"])")
-            if re.search(pat, text):
-                return True
-    return False
-
-
 def classify_question(question: str, language: str, confidence: float, ollama=None,
                       llm_intents=None, llm_signals=None):
     """
@@ -548,96 +376,3 @@ def classify_question(question: str, language: str, confidence: float, ollama=No
     )
 
 
-def detect_multihop(question: str) -> Tuple[bool, float, list, int]:
-    q_lower = question.lower().strip()
-    signals_fired, votes = [], 0
-    ar_count = sum(len(re.findall(r"\b" + re.escape(w) + r"\b", question)) for w in AR_QUESTION_WORDS)
-    fr_count = sum(len(re.findall(r"\b" + re.escape(w) + r"\b", q_lower)) for w in FR_QUESTION_WORDS)
-    total_qwords = ar_count + fr_count
-    if total_qwords >= 2:
-        votes += 1; signals_fired.append(f"S1:qwords({total_qwords})")
-    if any(re.search(p, question) for p in AR_CONJUNCTIVE_PATTERNS) or any(re.search(p, q_lower) for p in FR_CONJUNCTIVE_PATTERNS):
-        votes += 1; signals_fired.append("S2:conjunctive")
-    if any(re.search(p, question) for p in AR_COMPARISON_PATTERNS) or any(re.search(p, q_lower) for p in FR_COMPARISON_PATTERNS):
-        votes += 1; signals_fired.append("S3:comparison")
-    if any(re.search(p, question) for p in AR_ENUMERATION_PATTERNS) or any(re.search(p, q_lower) for p in FR_ENUMERATION_PATTERNS):
-        votes += 1; signals_fired.append("S4:enumeration")
-    if any(re.search(p, question) for p in AR_MULTI_ENTITY_PATTERNS) or any(re.search(p, q_lower) for p in FR_MULTI_ENTITY_PATTERNS):
-        votes += 1; signals_fired.append("S5:multi_entity")
-    ar_conj = sum(len(re.findall(p, question)) for p in [r"و\s*(كم|ما|كيف|أين|متى|هل|من|لماذا)", r"وما\s+هي", r"وما\s+هو"])
-    fr_conj = sum(len(re.findall(p, q_lower)) for p in [r"et\s+(comment|quels?|quelle|quand|où|combien|qui)", r"ainsi\s+que"])
-    hop_count = max(1, min(total_qwords + ar_conj + fr_conj, 4))
-    return votes >= 1, votes / 5, signals_fired, hop_count
-
-
-# ── Private helpers ───────────────────────────────────────────────────────────
-
-
-def _detect_by_script(text: str) -> Tuple[str, float]:
-    ar = sum(1 for c in text if "؀" <= c <= "ۿ")
-    la = sum(1 for c in text if "a" <= c.lower() <= "z")
-    total = sum(1 for c in text if not c.isspace() and not c.isdigit())
-    if total < 3:
-        return "unknown", 0.0
-    ar_ratio, la_ratio = ar / total, la / total
-    if ar_ratio > settings.arabic_script_min:
-        return "arabic_msa", min(1.0, (ar_ratio - settings.arabic_script_min) / (1 - settings.arabic_script_min) + 0.5)
-    if la_ratio > settings.french_latin_min:
-        return "french", min(1.0, (la_ratio - settings.french_latin_min) / (1 - settings.french_latin_min) + 0.5)
-    return ("arabic_msa" if ar_ratio > la_ratio else "french"), 0.4
-
-
-def _detect_by_keywords(text: str) -> Tuple[str, float]:
-    text_lower = text.lower()
-    ar_hits = sum(1 for kw in MSA_KEYWORDS if kw in text)
-    fr_hits = sum(1 for kw in FRENCH_KEYWORDS if kw in text_lower)
-    if ar_hits == 0 and fr_hits == 0:
-        return "unknown", 0.0
-    total = ar_hits + fr_hits
-    if ar_hits >= fr_hits:
-        return "arabic_msa", min(1.0, 0.5 + ar_hits / (total * 2))
-    return "french", min(1.0, 0.5 + fr_hits / (total * 2))
-
-
-def _detect_by_lingua(text: str) -> Tuple[str, float]:
-    try:
-        from lingua import Language
-        result = LINGUA_DETECTOR.detect_language_of(text)
-        conf_values = LINGUA_DETECTOR.compute_language_confidence_values(text)
-        lang_map = {Language.ARABIC: "arabic_msa", Language.FRENCH: "french"}
-        if result is None:
-            return "unknown", 0.0
-        detected = lang_map.get(result, "unknown")
-        conf = 0.5
-        for cv in conf_values:
-            if cv.language == result:
-                conf = cv.value
-                break
-        return detected, float(conf)
-    except Exception as exc:
-        log.debug("Lingua detection failed: %s", exc)
-        return "unknown", 0.0
-
-
-def _detect_by_langdetect(text: str) -> Tuple[str, float]:
-    try:
-        results = detect_langs(text)
-        lang_map = {"ar": "arabic_msa", "fr": "french"}
-        for r in results:
-            mapped = lang_map.get(r.lang)
-            if mapped:
-                return mapped, float(r.prob)
-        return "unknown", 0.0
-    except Exception as exc:
-        log.debug("langdetect detection failed: %s", exc)
-        return "unknown", 0.0
-
-
-def _detect_by_langid(text: str) -> Tuple[str, float]:
-    try:
-        lang, conf = langid.classify(text)
-        lang_map = {"ar": "arabic_msa", "fr": "french"}
-        return lang_map.get(lang, "unknown"), max(0.0, min(1.0, 1.0 + conf / 10.0))
-    except Exception as exc:
-        log.debug("langid detection failed: %s", exc)
-        return "unknown", 0.0

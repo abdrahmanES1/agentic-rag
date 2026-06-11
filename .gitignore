@@ -77,6 +77,7 @@ benchmarking/backup/
 benchmarking/opendataloader/
 benchmarking/scraper/runs/
 .claude/
+.agents
 # pre-correction dataset snapshots (working backups, superseded by v1.0)
 *.backup.json
 benchmark_testset_gold.pre_apply_*.json
